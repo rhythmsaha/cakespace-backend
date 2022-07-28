@@ -1,0 +1,20 @@
+{
+    "name": "cakescape-backend",
+    "version": "1.0.0",
+    "description": "Cakespace is a cake ordering web-application that allows users to advertise and sell their cakes. Rural towns would be able to sell their commodities to the rest of the globe as a result of this. The user can purchase a nearby cake through the Website.The goal of this project is to establish a gateway that allows users to update product information securely using the Website and to purchase things online.",
+    "main": "server.js",
+    "author": "Rhythm Saha",
+    "license": "MIT",
+    "scripts": {
+        "dev": "nodemon server.js"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.19"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.18.1",
+        "express-async-handler": "^1.2.0",
+        "mongoose": "^6.5.0"
+    }
+}
