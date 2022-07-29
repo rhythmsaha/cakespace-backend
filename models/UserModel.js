@@ -17,10 +17,7 @@ const User = new Schema(
             },
         },
 
-        middlename: {
-            type: String,
-            trim: true,
-        },
+        middlename: { type: String, trim: true },
 
         lastname: {
             type: String,
@@ -44,8 +41,8 @@ const User = new Schema(
             },
         },
 
-        salt: String,
-        hashed_password: String,
+        salt: { type: String },
+        hashed_password: { type: String },
 
         verified: {
             type: Boolean,
@@ -53,6 +50,8 @@ const User = new Schema(
         },
 
         addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
+        orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+        cart: { type: mongoose.Schema.Types.ObjectId, ref: "Cart" },
     },
     { timestamps: true }
 );
@@ -76,9 +75,11 @@ User.methods.verifyPassword = function (password) {
 
 // Generate Verification Token
 User.methods.generateVerificationToken = () => {
-    this.token = jwt.sign({ email: this.email }, this.salt, {
+    const token = jwt.sign({ email: this.email }, this.salt, {
         expiresIn: "1h",
     });
+
+    return token;
 };
 
 // Verify Account

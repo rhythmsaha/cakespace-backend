@@ -55,38 +55,6 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     });
 });
 
-exports.verifyAccount = asyncHandler(async (req, res) => {
-    const { token, email } = req.query;
-    if (!token) {
-        res.status(400);
-        throw new Error("Token is required!");
-    }
-
-    const seller = await Seller.findOne({ email });
-
-    if (!seller) {
-        res.status(400);
-        throw new Error("Account doesn't exist!");
-    }
-
-    if (seller.verified) {
-        res.status(400);
-        throw new Error("Account already verified!");
-    }
-
-    const verify = seller.verifyUser(token);
-
-    if (!verify) {
-        res.status(403);
-        throw new Error("Invalid Token!");
-    }
-
-    res.status(200).json({
-        message: "Successfully verified your account",
-    });
-});
-exports.resendVerificationLink = asyncHandler(async (req, res) => {});
-
 exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -136,3 +104,41 @@ exports.getMe = asyncHandler(async (req, res) => {
         images: seller.images,
     });
 });
+
+exports.verifyAccount = asyncHandler(async (req, res) => {
+    const { token, email } = req.query;
+    if (!token) {
+        res.status(400);
+        throw new Error("Token is required!");
+    }
+
+    const seller = await Seller.findOne({ email });
+
+    if (!seller) {
+        res.status(400);
+        throw new Error("Account doesn't exist!");
+    }
+
+    if (seller.verified) {
+        res.status(400);
+        throw new Error("Account already verified!");
+    }
+
+    const verify = seller.verifyUser(token);
+
+    if (!verify) {
+        res.status(403);
+        throw new Error("Invalid Token!");
+    }
+
+    res.status(200).json({
+        message: "Successfully verified your account",
+    });
+});
+
+exports.resendVerificationLink = asyncHandler(async (req, res) => {});
+
+exports.forgetSellerPassword = asyncHandler(async (req, res) => {});
+exports.resetSellerPassword = asyncHandler(async (req, res) => {});
+
+exports.deleteStore = asyncHandler(async (req, res) => {});

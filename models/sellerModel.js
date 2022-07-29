@@ -2,17 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Seller = new Schema({
-    storeName: {
-        type: String,
-        required: "{PATH} is required!",
-        trim: true,
-    },
+    isActive: { type: Boolean, default: true },
 
-    owner: {
-        type: String,
-        required: "{PATH} is required!",
-        trim: true,
-    },
+    storeName: { type: String, required: "{PATH} is required!", trim: true },
+
+    owner: { type: String, required: "{PATH} is required!", trim: true },
 
     email: {
         type: String,
@@ -21,48 +15,27 @@ const Seller = new Schema({
         trim: true,
     },
 
-    salt: String,
-    hashed_password: String,
+    salt: { type: String },
 
-    verified: {
-        type: Boolean,
-        default: false,
-    },
+    hashed_password: { type: String },
+
+    verified: { type: Boolean, default: false },
 
     address: {
-        street_address1: {
-            type: String,
-            required: "{PATH} is required!",
-            trim: true,
-        },
-        street_address2: String,
-
-        city: {
-            type: String,
-            required: "{PATH} is required!",
-            trim: true,
-        },
-
-        state: {
-            type: String,
-            required: "{PATH} is required!",
-            trim: true,
-        },
-
-        postal: {
-            type: Number,
-            required: "{PATH} is required!",
-            trim: true,
-        },
+        street: { type: String, required: "{PATH} is required!", trim: true },
+        area: { type: String, trim: true },
+        city: { type: String, required: "{PATH} is required!", trim: true },
+        state: { type: String, required: "{PATH} is required!", trim: true },
+        postal: { type: String, required: "{PATH} is required!", trim: true },
     },
 
-    phone: {
-        type: Number,
-        required: "{PATH} is required!",
-        trim: true,
-    },
+    phone: { type: String, required: "{PATH} is required!", trim: true },
 
     images: [{ type: String }],
+
+    products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
 });
 
 Seller.methods.hashPassword = function (password) {
