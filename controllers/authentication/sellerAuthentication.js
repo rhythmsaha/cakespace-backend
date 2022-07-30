@@ -65,7 +65,7 @@ exports.loginSeller = asyncHandler(async (req, res) => {
         throw new Error("Please provide valid email address!");
     }
 
-    const seller = await SellerModel.findOne({ email });
+    const seller = await Seller.findOne({ email });
 
     if (!seller) {
         res.status(403);
