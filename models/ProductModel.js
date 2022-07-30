@@ -22,6 +22,8 @@ const Product = new Schema({
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     seller: { type: mongoose.Schema.Types.ObjectId, ref: "Seller" },
     stock: { type: Number, default: 1 },
+    views: { type: Number, default: 0 },
+    purchases: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model("Product", Product);
