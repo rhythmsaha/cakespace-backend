@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const Seller = new Schema({
     isActive: { type: Boolean, default: true },
@@ -55,8 +57,9 @@ Seller.methods.verifyPassword = function (password) {
 };
 
 // Generate Verification Token
-Seller.methods.generateVerificationToken = () => {
-    const token = jwt.sign({ email: this.email }, this.salt, {
+Seller.methods.generateVerificationToken = (salt) => {
+    const email = this.email;
+    const token = jwt.sign({ email: email }, salt, {
         expiresIn: "1h",
     });
 

@@ -10,8 +10,6 @@ const authentication = require("./routes/authenticationRoute");
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(notFound);
-app.use(errorHandler);
 
 // API Routes
 app.get("/", (req, res) => {
@@ -19,6 +17,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authentication);
+
+app.use(notFound);
+app.use(errorHandler);
 
 // Listening to port
 const port = process.env.PORT || 8000;

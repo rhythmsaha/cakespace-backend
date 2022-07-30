@@ -7,7 +7,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     const { storeName, owner, email, password, address, phone, images } =
         req.body;
 
-    if (!storeName || !owner || !email || password) {
+    if (!storeName || !owner || !email || !password) {
         res.status(400);
         throw new Error("Please fill the required fields!");
     }
@@ -41,7 +41,9 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     });
 
     newSeller.hashPassword(password);
-    const verificationToken = newUser.generateVerificationToken();
+    const verificationToken = newSeller.generateVerificationToken(
+        newSeller.salt
+    );
 
     const saveSeller = newSeller.save();
 
