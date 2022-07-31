@@ -12,7 +12,9 @@ exports.getCategories = expressAsyncHandler(async (req, res) => {
     return res.status(200).json(categories);
 });
 
-exports.addCategory = expressAsyncHandler(async (req, res) => {});
+exports.addCategory = expressAsyncHandler(async (req, res) => {
+    // Add new Category
+});
 
 exports.updateCategory = expressAsyncHandler(async (req, res) => {});
 
