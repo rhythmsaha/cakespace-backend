@@ -24,11 +24,11 @@ const Seller = new Schema({
     verified: { type: Boolean, default: false },
 
     address: {
-        street: { type: String, required: "{PATH} is required!", trim: true },
+        street: { type: String, trim: true },
         area: { type: String, trim: true },
-        city: { type: String, required: "{PATH} is required!", trim: true },
-        state: { type: String, required: "{PATH} is required!", trim: true },
-        postal: { type: String, required: "{PATH} is required!", trim: true },
+        city: { type: String, trim: true },
+        state: { type: String, trim: true },
+        postal: { type: String, trim: true },
     },
 
     phone: { type: String, required: "{PATH} is required!", trim: true },
@@ -43,16 +43,12 @@ const Seller = new Schema({
 Seller.methods.hashPassword = function (password) {
     const salt = crypto.randomBytes(8).toString("hex");
     this.salt = salt;
-    this.hashed_password = crypto
-        .pbkdf2Sync(password, salt, 1000, 64, `sha512`)
-        .toString(`hex`);
+    this.hashed_password = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString(`hex`);
 };
 
 // Verify Password Hash
 Seller.methods.verifyPassword = function (password) {
-    let enteredPasswordHash = crypto
-        .pbkdf2Sync(password, this.salt, 1000, 64, `sha512`)
-        .toString(`hex`);
+    let enteredPasswordHash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`);
     return this.hashed_password === enteredPasswordHash;
 };
 

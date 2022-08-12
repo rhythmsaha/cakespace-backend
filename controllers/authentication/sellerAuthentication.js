@@ -4,8 +4,7 @@ const { isEmail } = require("validator");
 const asyncHandler = require("express-async-handler");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
-    const { storeName, owner, email, password, address, phone, images } =
-        req.body;
+    const { storeName, owner, email, password, address, phone, images } = req.body;
 
     if (!storeName || !owner || !email || !password) {
         res.status(400);
@@ -21,9 +20,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 
     if (seller && seller.verified) {
         res.status(400);
-        throw new Error(
-            "This email address is registered with another account!"
-        );
+        throw new Error("This email address is registered with another account!");
     }
 
     if (seller && !seller.verified) {
@@ -41,9 +38,8 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     });
 
     newSeller.hashPassword(password);
-    const verificationToken = newSeller.generateVerificationToken(
-        newSeller.salt
-    );
+
+    const verificationToken = newSeller.generateVerificationToken(newSeller.salt);
 
     const saveSeller = newSeller.save();
 
@@ -88,7 +84,11 @@ exports.loginSeller = asyncHandler(async (req, res) => {
         expiresIn: "1d",
     });
 
-    return res.status(200).json({ JWT_TOKEN, message: "Login Successfull!" });
+    return res.status(200).json({
+        JWT_TOKEN,
+        user: seller,
+        message: "Login Successfull!",
+    });
 });
 
 exports.getMe = asyncHandler(async (req, res) => {
@@ -98,12 +98,14 @@ exports.getMe = asyncHandler(async (req, res) => {
     if (!seller) return res.status(404).json({ message: "Account Not Found!" });
 
     return res.status(200).json({
-        storename: seller.storeName,
-        owner: seller.owner,
-        email: seller.email,
-        address: seller.address,
-        phone: seller.phone,
-        images: seller.images,
+        user: {
+            storename: seller.storeName,
+            owner: seller.owner,
+            email: seller.email,
+            address: seller.address,
+            phone: seller.phone,
+            images: seller.images,
+        },
     });
 });
 
