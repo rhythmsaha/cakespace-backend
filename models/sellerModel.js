@@ -14,6 +14,11 @@ const Seller = new Schema({
         review: { type: Boolean, default: true },
         lowTock: { type: Boolean, default: true },
     },
+    emailSettings: {
+        orders: { type: Boolean, default: true },
+        review: { type: Boolean, default: true },
+        lowTock: { type: Boolean, default: true },
+    },
 });
 
 Seller.methods.hashPassword = function (password) {
