@@ -1,22 +1,26 @@
-require("dotenv/config");
-require("./config/db");
 const express = require("express");
-const cors = require("cors");
+
+const dotenv = require("dotenv");
 const app = express();
+const connectDB = require("./config/db");
+const cors = require("cors");
 
 const { errorHandler, notFound } = require("./middlewares/errorMiddleware");
 const authentication = require("./routes/authenticationRoute");
 
-// Middlewares
+dotenv.config();
+connectDB();
+
+// common middlewares
 app.use(cors());
 app.use(express.json());
 
-// API Routes
+// API routes
+app.use("/auth", authentication);
+
 app.get("/", (req, res) => {
     res.send("Running!");
 });
-
-app.use("/auth", authentication);
 
 app.use(notFound);
 app.use(errorHandler);
