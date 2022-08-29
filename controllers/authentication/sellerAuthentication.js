@@ -75,4 +75,5 @@ exports.getMe = asyncHandler(async (req, res) => {
 });
 
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {});
+
 exports.resetSellerPassword = asyncHandler(async (req, res) => {});
