@@ -268,5 +268,3 @@ exports.updateSellerInfo = asyncHandler(async (req, res) => {
         },
     });
 });
-
-exports.resendVerificationEmail = asyncHandler(async (req, res) => {});
