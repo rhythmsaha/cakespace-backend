@@ -1,8 +1,9 @@
 const expressAsyncHandler = require("express-async-handler");
-const { Category, SubCategory } = require("../models/Categories");
+const Category = require("../models/Categories");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
-    const categories = await Category.find();
+    const { enabled } = req.query;
+    const categories = await Category.find({ enabled });
 
     if (!categories) {
         res.status(404);
@@ -12,22 +13,74 @@ exports.getCategories = expressAsyncHandler(async (req, res) => {
     return res.status(200).json(categories);
 });
 
-exports.addCategory = expressAsyncHandler(async (req, res) => {
-    // Add new Category
+exports.getCategory = expressAsyncHandler(async (req, res) => {
+    const { slug } = req.params;
+    const category = await Category.findOne({ slug });
+
+    if (!category) {
+        res.status(404);
+        throw new Error("No category found!");
+    }
+
+    return res.status(200).json(category);
 });
 
-exports.updateCategory = expressAsyncHandler(async (req, res) => {});
+exports.addCategory = expressAsyncHandler(async (req, res) => {
+    const { role, type } = req?.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
 
-exports.removeCategory = expressAsyncHandler(async (req, res) => {});
+    const { name } = req.body;
 
-exports.getCategory = expressAsyncHandler(async (req, res) => {});
+    if (!name) res.status(400).json({ type: "NAME", message: "Name is required!" });
 
-exports.getSubCategories = expressAsyncHandler(async (req, res) => {});
+    const category = Category.findOne({ name });
 
-exports.addSubCategory = expressAsyncHandler(async (req, res) => {});
+    if (category) return res.status(400).json({ message: "Category already exist!" });
 
-exports.updateSubCategory = expressAsyncHandler(async (req, res) => {});
+    const newCategory = new Category({ name });
 
-exports.removeSubCategory = expressAsyncHandler(async (req, res) => {});
+    const saveCategory = await newCategory.save();
 
-exports.getSubCategory = expressAsyncHandler(async (req, res) => {});
+    if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
+
+    res.json(saveCategory);
+});
+
+exports.updateCategory = expressAsyncHandler(async (req, res) => {
+    const { role, type } = req?.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const { slug } = req.params;
+    const { name } = req.body;
+
+    const category = Category.findOne({ slug });
+
+    if (!category) return res.status(404).json({ message: "Category not found!" });
+
+    category.name = name;
+
+    const saveCategory = await category.save();
+
+    if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
+
+    res.json(saveCategory);
+});
+
+exports.removeCategory = expressAsyncHandler(async (req, res) => {
+    const { _id, role, type } = req?.user;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const { slug } = req.params;
+
+    if (!slug) return res.status(400).json({ message: "slug is required!" });
+
+    const deleteCategory = await Category.findOneAndDelete({ slug: slug });
+
+    if (!deleteCategory) return res.status(404).json({ message: "Failed to delete category!" });
+
+    res.json({ message: "Successfully deleted category!" });
+});
