@@ -6,7 +6,9 @@ const connectDB = require("./config/db.config");
 const cors = require("cors");
 
 const { errorHandler, notFound } = require("./middlewares/errorMiddleware");
-const authentication = require("./routes/authenticationRoute");
+const authenticationRoute = require("./routes/authentication.routes");
+const categoriesRoute = require("./routes/categories.routes");
+const flavoursRoute = require("./routes/flavours.routes");
 
 dotenv.config();
 connectDB();
@@ -16,11 +18,9 @@ app.use(cors());
 app.use(express.json());
 
 // API routes
-app.use("/auth", authentication);
-
-app.get("/", (req, res) => {
-    res.send("Running!");
-});
+app.use("/auth", authenticationRoute);
+app.use("/categories", categoriesRoute);
+app.use("/flavours", flavoursRoute);
 
 app.use(notFound);
 app.use(errorHandler);
