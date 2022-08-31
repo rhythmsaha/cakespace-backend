@@ -2,13 +2,12 @@ const jwt = require("jsonwebtoken");
 const Seller = require("../../models/sellerModel");
 const { isEmail } = require("validator");
 const asyncHandler = require("express-async-handler");
-const { forgetPassword } = require("../../utils/forgetPassword");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
     const { fullName, email, password, confirmPasword } = req.body;
 
     if (!fullName || !email || !password || !confirmPasword)
-        return res.status(400).json({ type: "ALL_FIELDS", message: "Please fill the required fields!" });
+        return res.status(400).json({ type: "ALL", message: "Please fill the required fields!" });
 
     if (!email || !isEmail(email))
         return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
@@ -21,7 +20,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 
     const seller = await Seller.findOne({ email: email });
 
-    if (seller) return res.status(400).json({ type: "ACCOUNT", message: "Account already exists!" });
+    if (seller) return res.status(400).json({ type: "EMAIL", message: "Email already in use!" });
 
     const newSeller = new Seller({ fullName, email });
 
@@ -69,10 +68,14 @@ exports.loginSeller = asyncHandler(async (req, res) => {
 });
 
 exports.getMe = asyncHandler(async (req, res) => {
-    const { _id } = req.storeData;
+    const { _id, role, type } = req?.user;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ message: "Account Not Found!" });
+    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -109,6 +112,72 @@ exports.forgetSellerPassword = asyncHandler(async (req, res) => {
 });
 
 exports.resetSellerPassword = asyncHandler(async (req, res) => {
-    const { password, confirmPasword, token } = req.body;
-    if (password !== confirmPasword) return res.status(400).json({ message: "Passwords didn't match!" });
+    const { _id, role, type } = req?.user;
+
+    if (type !== "RESET_PASSWORD" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const seller = await Seller.findById(_id);
+    if (!seller) return res.status(404).json({ message: "User not found!" });
+
+    const { password, confirmPassword } = req.body;
+
+    if (!password || !confirmPassword)
+        return res.status(400).json({ type: "PASSWORD", message: "Password Can't be empty!" });
+
+    if (password !== confirmPassword)
+        return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
+
+    seller.hashPassword(password);
+
+    const saveSeller = newSeller.save();
+
+    if (!saveSeller) {
+        res.status(500);
+        throw new Error("Oops! Something went wrong");
+    }
+
+    return res.status(201).json({
+        message: "Password changed successfully",
+    });
+});
+
+exports.changeSellerPassword = asyncHandler(async (req, res) => {
+    const { _id, role } = req?.user;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const seller = await Seller.findById(_id);
+
+    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+
+    const checkPassword = await seller.verifyPassword(oldPassword);
+
+    if (!checkPassword) return res.status(403).json({ type: "OLD_PASSWORD", message: "Incorrect Password!" });
+
+    if (!newPassword || !confirmPassword)
+        return res.status(400).json({ type: "PASSWORD", message: "Passwords Can't be empty!" });
+
+    if (newPassword !== confirmPassword)
+        return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
+
+    seller.hashPassword(password);
+
+    const saveSeller = newSeller.save();
+
+    if (!saveSeller) {
+        res.status(500);
+        throw new Error("Oops! Something went wrong");
+    }
+
+    const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+    });
+
+    return res.status(201).json({
+        JWT_TOKEN,
+        message: "Password changed successfully",
+    });
 });
