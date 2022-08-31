@@ -5,7 +5,7 @@ exports.authorize = async (req, res, next) => {
 
     try {
         const token = req.headers.authorization.split(" ")[1];
-        const JWT_DATA = jwt.verify(token);
+        const JWT_DATA = jwt.verify(token, process.env.JWT_SECRET);
         req.user = JWT_DATA;
         next();
     } catch (error) {

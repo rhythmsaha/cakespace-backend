@@ -143,7 +143,7 @@ exports.resetSellerPassword = asyncHandler(async (req, res) => {
 });
 
 exports.changeSellerPassword = asyncHandler(async (req, res) => {
-    const { _id, role } = req?.user;
+    const { _id, role, type } = req?.user;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     if (type !== "AUTH_TOKEN" && role !== "ADMIN")
@@ -181,3 +181,40 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
         message: "Password changed successfully",
     });
 });
+
+exports.updateSellerInfo = asyncHandler(async (req, res) => {
+    const { _id, role, type } = req?.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const seller = await Seller.findById(_id);
+
+    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+
+    const { fullName, email, avatar } = req.body;
+
+    seller.fullName = fullName;
+    seller.avatar = avatar;
+
+    let emailIsChanged = false;
+
+    if (seller.email !== email) {
+        seller.email = email;
+        emailIsChanged = true;
+    }
+
+    const saveSeller = await seller.save();
+
+    res.json({
+        Type: "UPDATE",
+        message: "Updated Successfully!",
+        emailIsChanged,
+        user: {
+            fullName: saveSeller.fullName,
+            email: saveSeller.email,
+            avatar: saveSeller.avatar,
+        },
+    });
+});
+
+exports.resendVerificationEmail = asyncHandler(async (req, res) => {});
