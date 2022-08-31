@@ -93,6 +93,10 @@ exports.getMe = asyncHandler(async (req, res) => {
 
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
+
+    if (!email || !isEmail(email))
+        return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
+
     const seller = await Seller.findOne({ email });
     if (!seller) return res.status(404).json({ message: "User not found!" });
 
@@ -182,6 +186,61 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
     });
 });
 
+exports.changeSellerEmail = asyncHandler(async (req, res) => {
+    const { _id, role, type } = req?.user;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const seller = await Seller.findById(_id);
+
+    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+
+    const { email } = req.body;
+
+    if (!email || !isEmail(email))
+        return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
+
+    if (seller.email === email)
+        return res.status(400).json({ type: "EMAIL", message: "This email address is already added to your account!" });
+
+    // Generate OTP
+    // Send email
+
+    res.json({
+        message: "Please verify your email address!",
+    });
+});
+
+exports.updateSellerEmail = asyncHandler(async (req, res) => {
+    const { _id, role, type } = req?.user;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
+        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    const seller = await Seller.findById(_id);
+
+    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+
+    const { code, email } = req.body;
+    // Verify OTP
+
+    seller.email = email;
+
+    const saveSeller = await seller.save();
+
+    res.json({
+        Type: "UPDATE",
+        message: "Updated Successfully!",
+
+        user: {
+            fullName: saveSeller.fullName,
+            email: saveSeller.email,
+            avatar: saveSeller.avatar,
+        },
+    });
+});
+
 exports.updateSellerInfo = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
     if (type !== "AUTH_TOKEN" && role !== "ADMIN")
@@ -191,24 +250,17 @@ exports.updateSellerInfo = asyncHandler(async (req, res) => {
 
     if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
 
-    const { fullName, email, avatar } = req.body;
+    const { fullName, avatar } = req.body;
 
     seller.fullName = fullName;
     seller.avatar = avatar;
-
-    let emailIsChanged = false;
-
-    if (seller.email !== email) {
-        seller.email = email;
-        emailIsChanged = true;
-    }
 
     const saveSeller = await seller.save();
 
     res.json({
         Type: "UPDATE",
         message: "Updated Successfully!",
-        emailIsChanged,
+
         user: {
             fullName: saveSeller.fullName,
             email: saveSeller.email,
