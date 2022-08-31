@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const UserMoodel = require("../../models/UserModel");
+const UserMoodel = require("../../models/user.model");
 const { isEmail } = require("validator");
 const asyncHandler = require("express-async-handler");
 
@@ -20,9 +20,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 
     if (_user && _user.verified) {
         res.status(400);
-        throw new Error(
-            "This email address is registered with another account!"
-        );
+        throw new Error("This email address is registered with another account!");
     }
 
     if (_user && !_user.verified) {

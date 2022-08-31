@@ -12,7 +12,7 @@ const {
     changeSellerPassword,
     changeSellerEmail,
     updateSellerEmail,
-} = require("../controllers/authentication/sellerAuthentication");
+} = require("../controllers/authentication/seller.auth.controller");
 
 router.post("/seller/signup", registerSeller);
 router.post("/seller/login", loginSeller);

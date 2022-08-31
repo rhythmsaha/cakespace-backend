@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const Seller = require("../../models/sellerModel");
+const Seller = require("../../models/seller.model");
 const { isEmail } = require("validator");
 const asyncHandler = require("express-async-handler");
 
