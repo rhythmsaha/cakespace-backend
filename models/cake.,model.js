@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const slug = require("mongoose-slug-generator");
 mongoose.plugin(slug);
 
-const Product = new Schema({
+const Cake = new Schema({
     name: {
         type: String,
         required: "{PATH} is required!",
@@ -13,17 +13,15 @@ const Product = new Schema({
     slug: { type: String, slug: "name", index: true, unique: true },
     description: { type: String, required: "{PATH} is required!", trim: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-    subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" },
+    flavours: [{ type: mongoose.Schema.Types.ObjectId, ref: "Flavour" }],
     weight: { type: String, required: "{PATH} is required!", trim: true },
-    flavours: [{ type: String, trim: true }],
-    egg_type: [{ type: String, trim: true }],
+    eggless: [{ type: Boolean, trim: true }],
     price: { type: Number, required: "{PATH} is required!" },
     images: [{ type: String, trim: true }],
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
-    seller: { type: mongoose.Schema.Types.ObjectId, ref: "Seller" },
     stock: { type: Number, default: 1 },
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     views: { type: Number, default: 0 },
     purchases: { type: Number, default: 0 },
 });
 
-module.exports = mongoose.model("Product", Product);
+module.exports = mongoose.model("Cake", Cake);
