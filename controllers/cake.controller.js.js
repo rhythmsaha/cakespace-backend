@@ -1,5 +1,5 @@
 const expressAsyncHandler = require("express-async-handler");
-const Cake = require("../models/cake.,model");
+const Cake = require("../models/cake.model");
 const { isStringsArray } = require("../utils/validate");
 
 exports.newCake = expressAsyncHandler(async (req, res) => {
@@ -147,6 +147,8 @@ exports.deleteCake = expressAsyncHandler(async (req, res) => {
 });
 
 exports.getOneCake = expressAsyncHandler(async (req, res) => {
+    const { role, type } = req?.user;
+
     const { slug } = req.params;
 
     const cake = await Cake.findOne({ slug });
@@ -155,11 +157,38 @@ exports.getOneCake = expressAsyncHandler(async (req, res) => {
         return res.status(404).json({ type: "CAKE", message: "Cake not found!" });
     }
 
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        cake.views += 1;
+        cake.save();
+
+        delete cake["__v"];
+        delete cake["views"];
+        delete cake["purchases"];
+    }
+
     res.status(200).json(cake);
 });
 
 exports.getCakes = expressAsyncHandler(async (req, res) => {
-    const { category, flavours, weight, eggless, price, stock } = req.body;
+    const { role, type } = req?.user;
+    const { category, flavours, weight, eggless, price } = req.body;
+
+    const queryOptions = {};
+
+    if (category && category.length > 0) queryOptions.category = category;
+    if (flavours && flavours.length > 0) queryOptions.flavours = flavours;
+    if (weight && weight > 0) queryOptions.weight = weight;
+    if (typeof eggless === Boolean) queryOptions.eggless = eggless;
+
+    const cake = await Cake.find({ ...queryOptions });
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        delete cake["__v"];
+        delete cake["views"];
+        delete cake["purchases"];
+    }
+
+    res.status(200).json(cake);
 });
 
 exports.searchCake = expressAsyncHandler(async (req, res) => {});
