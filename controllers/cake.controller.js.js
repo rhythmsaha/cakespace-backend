@@ -72,12 +72,6 @@ exports.editCake = expressAsyncHandler(async (req, res) => {
 
     const { slug } = req.params;
 
-    const cake = await Cake.findOne({ slug });
-
-    if (!cake) {
-        return res.status(404).json({ type: "CAKE", message: "Cake not found!" });
-    }
-
     const { name, description, category, weight, flavours, eggless, price, images, seller, stock } = req.body;
 
     if (!name || !description || !category || !weight || !flavours || !egg_type || !price || !images || !seller) {
@@ -112,17 +106,19 @@ exports.editCake = expressAsyncHandler(async (req, res) => {
         return res.status(400).json({ type: "STOCKS", message: "Stocks must be number!" });
     }
 
-    cake.name = name;
-    cake.description = description;
-    cake.weight = weight;
-    cake.eggless = eggless;
-    cake.price = price;
-    cake.images = images;
-    cake.stock = stock;
+    const updateOptions = {
+        name: name,
+        description: description,
+        weight: weight,
+        eggless: eggless,
+        price: price,
+        images: images,
+        stock: stock,
+    };
 
-    const saveCake = await cake.save();
+    const updateCake = await Cake.findOneAndUpdate({ slug }, updateOptions, { new: true });
 
-    res.status(200).json(saveCake);
+    res.status(200).json(updateCake);
 });
 
 exports.deleteCake = expressAsyncHandler(async (req, res) => {
@@ -158,12 +154,11 @@ exports.getOneCake = expressAsyncHandler(async (req, res) => {
     }
 
     if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
-        cake.views += 1;
-        cake.save();
-
         delete cake["__v"];
         delete cake["views"];
         delete cake["purchases"];
+
+        Cake.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
     }
 
     res.status(200).json(cake);
@@ -180,7 +175,7 @@ exports.getCakes = expressAsyncHandler(async (req, res) => {
     if (weight && weight > 0) queryOptions.weight = weight;
     if (typeof eggless === Boolean) queryOptions.eggless = eggless;
 
-    const cake = await Cake.find({ ...queryOptions });
+    const cake = await Cake.find({ ...queryOptions, price: { $gt: 50 } });
 
     if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
         delete cake["__v"];
