@@ -10,8 +10,7 @@ const User = new Schema(
             required: "{PATH} is required!",
             trim: true,
             validate(value) {
-                if (!isLength(value, [{ min: 2, max: 30 }]))
-                    throw new Error("minimum 2 characters required");
+                if (!isLength(value, [{ min: 2, max: 30 }])) throw new Error("minimum 2 characters required");
 
                 if (!isAlpha(value)) throw new Error("only alphabets allowed");
             },
@@ -24,8 +23,7 @@ const User = new Schema(
             required: "{PATH} is required!",
             trim: true,
             validate(value) {
-                if (!isLength(value, [{ min: 2, max: 30 }]))
-                    throw new Error("minimum 2 characters required");
+                if (!isLength(value, [{ min: 2, max: 30 }])) throw new Error("minimum 2 characters required");
 
                 if (!isAlpha(value)) throw new Error("only alphabets allowed");
             },
@@ -60,16 +58,12 @@ const User = new Schema(
 User.methods.hashPassword = function (password) {
     const salt = crypto.randomBytes(8).toString("hex");
     this.salt = salt;
-    this.hashed_password = crypto
-        .pbkdf2Sync(password, salt, 1000, 64, `sha512`)
-        .toString(`hex`);
+    this.hashed_password = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString(`hex`);
 };
 
 // Verify Password Hash
 User.methods.verifyPassword = function (password) {
-    let enteredPasswordHash = crypto
-        .pbkdf2Sync(password, this.salt, 1000, 64, `sha512`)
-        .toString(`hex`);
+    let enteredPasswordHash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`);
     return this.hashed_password === enteredPasswordHash;
 };
 

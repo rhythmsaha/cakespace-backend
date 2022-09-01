@@ -3,7 +3,13 @@ const router = express.Router();
 
 const { authorize } = require("../middlewares/authorize");
 
-const { getCategories, getCategory, updateCategory } = require("../controllers/categories.controller");
+const {
+    getCategories,
+    getCategory,
+    updateCategory,
+    addCategory,
+    removeCategory,
+} = require("../controllers/categories.controller");
 
 router.get("/", getCategories);
 router.get("/:slug", getCategory);
