@@ -174,8 +174,10 @@ exports.getCakes = expressAsyncHandler(async (req, res) => {
     if (flavours && flavours.length > 0) queryOptions.flavours = flavours;
     if (weight && weight > 0) queryOptions.weight = weight;
     if (typeof eggless === Boolean) queryOptions.eggless = eggless;
+    if (typeof price.low === Number && price >= 0 && typeof price.high === Number && price.high > price.low)
+        queryOptions.price = { $gte: price.low, $lte: price.high };
 
-    const cake = await Cake.find({ ...queryOptions, price: { $gt: 50 } });
+    const cake = await Cake.find({ ...queryOptions });
 
     if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
         delete cake["__v"];
