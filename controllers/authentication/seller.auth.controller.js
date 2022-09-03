@@ -8,7 +8,8 @@ const sendMail = require("../../utils/mailgun");
 exports.registerSeller = asyncHandler(async (req, res) => {
     const { fullName, email, password, confirmPassword } = req.body;
 
-    if (password !== confirmPassword) return res.status(400).json({ message: "Passwords don't match!" });
+    if (password !== confirmPassword)
+        return res.status(400).json([{ field: "confirmPassword", message: "Passwords don't match!" }]);
 
     const newSeller = new Seller({ fullName, email, password });
 
@@ -19,22 +20,22 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json({
-        message: "Account Created!",
+        message: "We've sent an OTP to your email address to verify your email address!",
     });
 });
 
 exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !validator.isEmail(email)) new AppError("Please provide valid email address!", 400);
+    if (!email || !validator.isEmail(email)) throw new AppError("Please provide a valid email address!", 400, "email");
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) new AppError("Account not found!", 404);
+    if (!seller) throw new AppError("Email doesn't exist!", 404, "email");
 
     const checkPassword = await seller.verifyPassword(password);
 
-    if (!checkPassword) new AppError("Incorrect Password!", 403);
+    if (!checkPassword) throw new AppError("Incorrect Password!", 403, "password");
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -47,7 +48,7 @@ exports.loginSeller = asyncHandler(async (req, res) => {
             email: seller.email,
             avatar: seller.avatar,
         },
-        message: "Login Successfull!",
+        message: "Login Successful!",
     });
 });
 
