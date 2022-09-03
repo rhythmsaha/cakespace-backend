@@ -3,6 +3,7 @@ const Seller = require("../../models/seller.model");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../../utils/AppError");
 const { default: validator } = require("validator");
+const sendMail = require("../../utils/mailgun");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
     const { fullName, email, password, confirmPassword } = req.body;
