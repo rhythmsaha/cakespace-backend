@@ -2,6 +2,7 @@ const expressAsyncHandler = require("express-async-handler");
 const Cake = require("../models/cake.model");
 const { isStringsArray } = require("../utils/validate");
 
+
 exports.newCake = expressAsyncHandler(async (req, res) => {
     const { role, type } = req?.user;
 
