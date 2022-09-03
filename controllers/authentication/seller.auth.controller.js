@@ -15,7 +15,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     const saveSeller = await newSeller.save();
 
     if (!saveSeller) {
-        throw new AppError("Oops! Something went wrong", 500);
+        throw new AppError("Something went wrong", 500);
     }
 
     return res.status(201).json({
@@ -26,16 +26,15 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !validator.isEmail(email))
-        return res.status(403).json({ type: "EMAIL", message: "Please provide valid email address!" });
+    if (!email || !validator.isEmail(email)) new AppError("Please provide valid email address!", 400);
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) return res.status(403).json({ type: "EMAIL", message: "Account not found!" });
+    if (!seller) new AppError("Account not found!", 404);
 
     const checkPassword = await seller.verifyPassword(password);
 
-    if (!checkPassword) return res.status(403).json({ type: "PASSWORD", message: "Incorrect Password!" });
+    if (!checkPassword) new AppError("Incorrect Password!", 403);
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -55,12 +54,11 @@ exports.loginSeller = asyncHandler(async (req, res) => {
 exports.getMe = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+    if (!seller) new AppError("Account Doesn't exists!", 400);
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -79,11 +77,11 @@ exports.getMe = asyncHandler(async (req, res) => {
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
-    if (!email || !validator.isEmail(email))
-        return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
+    if (!email || !validator.isEmail(email)) new AppError("Please provide valid email address!", 400);
 
     const seller = await Seller.findOne({ email });
-    if (!seller) return res.status(404).json({ message: "User not found!" });
+
+    if (!seller) new AppError("No user found with this email address!", 404);
 
     const passwordResetToken = jwt.sign(
         { role: "ADMIN", type: "RESET_PASSWORD", _id: seller._id },
@@ -103,31 +101,24 @@ exports.forgetSellerPassword = asyncHandler(async (req, res) => {
 exports.resetSellerPassword = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "RESET_PASSWORD" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
 
     const seller = await Seller.findById(_id);
-    if (!seller) return res.status(404).json({ message: "User not found!" });
+
+    if (!seller) new AppError("User not found!", 404);
 
     const { password, confirmPassword } = req.body;
 
-    if (!password || !confirmPassword)
-        return res.status(400).json({ type: "PASSWORD", message: "Password Can't be empty!" });
-
-    if (password !== confirmPassword)
-        return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
+    if (password !== confirmPassword) return res.status(400).json({ message: "Passwords don't match!" });
 
     seller.password = password;
 
     const saveSeller = await newSeller.save();
 
-    if (!saveSeller) {
-        res.status(500);
-        throw new Error("Oops! Something went wrong");
-    }
+    if (!saveSeller) new AppError("Oops! Something went wrong", 500);
 
     return res.status(200).json({
-        message: "Password changed successfully",
+        message: "Password changed successfully!",
     });
 });
 
@@ -135,12 +126,11 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+    if (!seller) new AppError("User not found!", 404);
 
     const checkPassword = await seller.verifyPassword(oldPassword);
 

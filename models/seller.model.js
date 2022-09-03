@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const validator = require("validator");
+const { default: validator } = require("validator");
 const AppError = require("../utils/AppError");
 
 const Seller = new mongoose.Schema({
@@ -14,7 +14,6 @@ const Seller = new mongoose.Schema({
         required: "Name is required!",
         trim: true,
         minlength: [2, "Name must me atleast 2 characters long!"],
-        validate: [validator.isAlpha, "Name should only contain alphabets!"],
     },
 
     email: {
