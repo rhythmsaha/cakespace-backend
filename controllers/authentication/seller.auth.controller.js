@@ -1,36 +1,20 @@
 const jwt = require("jsonwebtoken");
 const Seller = require("../../models/seller.model");
-const { isEmail } = require("validator");
 const asyncHandler = require("express-async-handler");
+const AppError = require("../../utils/AppError");
+const { default: validator } = require("validator");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
-    const { fullName, email, password, confirmPasword } = req.body;
+    const { fullName, email, password, confirmPassword } = req.body;
 
-    if (!fullName || !email || !password || !confirmPasword)
-        return res.status(400).json({ type: "ALL", message: "Please fill the required fields!" });
+    if (password !== confirmPassword) return res.status(400).json({ message: "Passwords don't match!" });
 
-    if (!email || !isEmail(email))
-        return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
+    const newSeller = new Seller({ fullName, email, password });
 
-    if (!password || !confirmPasword)
-        return res.status(400).json({ type: "PASSWORD", message: "Password Can't be empty!" });
-
-    if (password !== confirmPasword)
-        return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
-
-    const seller = await Seller.findOne({ email: email });
-
-    if (seller) return res.status(400).json({ type: "EMAIL", message: "Email already in use!" });
-
-    const newSeller = new Seller({ fullName, email });
-
-    newSeller.hashPassword(password);
-
-    const saveSeller = newSeller.save();
+    const saveSeller = await newSeller.save();
 
     if (!saveSeller) {
-        res.status(500);
-        throw new Error("Oops! Something went wrong");
+        throw new AppError("Oops! Something went wrong", 500);
     }
 
     return res.status(201).json({
@@ -41,12 +25,12 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !isEmail(email))
+    if (!email || !validator.isEmail(email))
         return res.status(403).json({ type: "EMAIL", message: "Please provide valid email address!" });
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) return res.status(403).json({ type: "EMAIL", message: "Please provide valid email address!" });
+    if (!seller) return res.status(403).json({ type: "EMAIL", message: "Account not found!" });
 
     const checkPassword = await seller.verifyPassword(password);
 
@@ -94,7 +78,7 @@ exports.getMe = asyncHandler(async (req, res) => {
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
-    if (!email || !isEmail(email))
+    if (!email || !validator.isEmail(email))
         return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
 
     const seller = await Seller.findOne({ email });
@@ -132,16 +116,16 @@ exports.resetSellerPassword = asyncHandler(async (req, res) => {
     if (password !== confirmPassword)
         return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
 
-    seller.hashPassword(password);
+    seller.password = password;
 
-    const saveSeller = newSeller.save();
+    const saveSeller = await newSeller.save();
 
     if (!saveSeller) {
         res.status(500);
         throw new Error("Oops! Something went wrong");
     }
 
-    return res.status(201).json({
+    return res.status(200).json({
         message: "Password changed successfully",
     });
 });
@@ -167,7 +151,7 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
     if (newPassword !== confirmPassword)
         return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
 
-    seller.hashPassword(password);
+    seller.password = password;
 
     const saveSeller = newSeller.save();
 

@@ -4,8 +4,17 @@ const notFound = (req, res, next) => {
     next(error);
 };
 
+const handleValidationError = (err, res) => {
+    const errObj = Object.values(err.errors).map((el) => ({ field: el.path, message: el.message }));
+    let code = 400;
+    res.status(code).send(errObj);
+};
+
 const errorHandler = (err, req, res, next) => {
-    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    const statusCode = err.statusCode || 500;
+
+    if (err.name === "ValidationError") return (err = handleValidationError(err, res));
+
     res.status(statusCode);
     res.json({
         message: err.message,

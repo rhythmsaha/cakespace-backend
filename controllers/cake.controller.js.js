@@ -171,7 +171,7 @@ exports.getCakes = expressAsyncHandler(async (req, res) => {
     const queryOptions = {};
 
     if (category && category.length > 0) queryOptions.category = category;
-    if (flavours && flavours.length > 0) queryOptions.flavours = flavours;
+    if (flavours && flavours.length > 0) queryOptions.flavours = { $in: flavours };
     if (weight && weight > 0) queryOptions.weight = weight;
     if (typeof eggless === Boolean) queryOptions.eggless = eggless;
     if (typeof price.low === Number && price >= 0 && typeof price.high === Number && price.high > price.low)
