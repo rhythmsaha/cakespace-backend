@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const {default: validator} = require("validator");
+const { default: validator } = require("validator");
 const AppError = require("../utils/AppError");
 
 const Seller = new mongoose.Schema({
@@ -41,16 +41,18 @@ const Seller = new mongoose.Schema({
     },
 
     notificationSettings: {
-        orders: {type: Boolean, default: true},
-        review: {type: Boolean, default: true},
-        lowStock: {type: Boolean, default: true},
+        orders: { type: Boolean, default: true },
+        review: { type: Boolean, default: true },
+        lowStock: { type: Boolean, default: true },
     },
 
     emailSettings: {
-        orders: {type: Boolean, default: true},
-        review: {type: Boolean, default: true},
-        lowStock: {type: Boolean, default: true},
+        orders: { type: Boolean, default: true },
+        review: { type: Boolean, default: true },
+        lowStock: { type: Boolean, default: true },
     },
+
+    notification: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
 });
 
 Seller.pre("save", function (next) {
