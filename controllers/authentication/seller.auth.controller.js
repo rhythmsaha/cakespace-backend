@@ -72,7 +72,7 @@ exports.getMe = asyncHandler(async (req, res) => {
         throw new AppError("Access Denied!", 403, "authorization");
     }
 
-    const seller = await Seller.findById(_id, ["-_id", "-__v", "-salt", "-password", "-notifications"]);
+    const seller = await Seller.findById(_id);
 
     if (!seller) {
         throw new AppError("Access Denied!", 403, "authorization");
