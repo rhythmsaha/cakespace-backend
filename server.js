@@ -4,23 +4,23 @@ const dotenv = require("dotenv");
 const app = express();
 const connectDB = require("./config/db.config");
 const cors = require("cors");
-const Redis = require("redis");
 
 const { errorHandler, notFound } = require("./middlewares/errorMiddleware");
 const authenticationRoute = require("./routes/authentication.routes");
 const categoriesRoute = require("./routes/categories.routes");
 const flavoursRoute = require("./routes/flavours.routes");
 
-const redisClient = Redis.createClient({
-    url: "redis://redis-12781.c305.ap-south-1-1.ec2.cloud.redislabs.com:12781",
-    password: "IZOZdKcFSXLwHMqRjSY0m4QSVJmmUXV6",
-});
+// const Redis = require("redis");
+// const redisClient = Redis.createClient({
+//     url: "redis://redis-12781.c305.ap-south-1-1.ec2.cloud.redislabs.com:12781",
+//     password: "IZOZdKcFSXLwHMqRjSY0m4QSVJmmUXV6",
+// });
 
-redisClient.connect();
+// redisClient.connect();
 
-redisClient.on("connect", function () {
-    console.log("Connected!");
-});
+// redisClient.on("connect", function () {
+//     console.log("Connected!");
+// });
 
 dotenv.config();
 connectDB();
