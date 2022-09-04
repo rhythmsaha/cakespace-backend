@@ -6,12 +6,12 @@ const { default: validator } = require("validator");
 const sendMail = require("../../utils/mailgun");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
-    const { fullName, email, password, confirmPassword } = req.body;
+    const { fullName, email, password, confirmPassword, avatar } = req.body;
 
     if (password !== confirmPassword)
         return res.status(400).json([{ field: "confirmPassword", message: "Passwords don't match!" }]);
 
-    const newSeller = new Seller({ fullName, email, password });
+    const newSeller = new Seller({ fullName, email, password, avatar });
 
     const saveSeller = await newSeller.save();
 
@@ -47,6 +47,7 @@ exports.loginSeller = asyncHandler(async (req, res) => {
             fullName: seller.fullName,
             email: seller.email,
             avatar: seller.avatar,
+            role: "admin",
         },
         message: "Login Successful!",
     });
@@ -71,6 +72,7 @@ exports.getMe = asyncHandler(async (req, res) => {
             fullName: seller.fullName,
             email: seller.email,
             avatar: seller.avatar,
+            role: "admin",
         },
     });
 });
