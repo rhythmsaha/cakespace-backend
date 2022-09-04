@@ -230,15 +230,15 @@ exports.updateSellerInfo = asyncHandler(async (req, res) => {
 
     const { fullName, avatar } = req.body;
 
+    console.log(fullName);
+
     seller.fullName = fullName;
-    seller.avatar = avatar;
+    if (avatar) seller.avatar = avatar;
 
     const saveSeller = await seller.save();
 
     res.json({
-        Type: "UPDATE",
         message: "Updated Successfully!",
-
         user: {
             fullName: saveSeller.fullName,
             email: saveSeller.email,
