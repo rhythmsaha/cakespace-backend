@@ -8,15 +8,19 @@ const sendMail = require("../../utils/mailgun");
 exports.registerSeller = asyncHandler(async (req, res) => {
     const { fullName, email, password, confirmPassword, avatar } = req.body;
 
-    if (password !== confirmPassword)
-        return res.status(400).json([{ field: "confirmPassword", message: "Passwords don't match!" }]);
+    if (password !== confirmPassword) {
+        return res.status(400).json({
+            type: "validationError",
+            fields: [{ field: "confirmPassword", message: "Passwords don't match!" }],
+        });
+    }
 
     const newSeller = new Seller({ fullName, email, password, avatar });
 
     const saveSeller = await newSeller.save();
 
     if (!saveSeller) {
-        throw new AppError("Something went wrong", 500);
+        throw new AppError("Something went wrong", 500, "serverError");
     }
 
     return res.status(201).json({
@@ -27,15 +31,21 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !validator.isEmail(email)) throw new AppError("Please provide a valid email address!", 400, "email");
+    if (!email || !validator.isEmail(email)) {
+        throw new AppError("Please provide a valid email address!", 400, "email");
+    }
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) throw new AppError("Email doesn't exist!", 404, "email");
+    if (!seller) {
+        throw new AppError("Email doesn't exist!", 404, "email");
+    }
 
     const checkPassword = await seller.verifyPassword(password);
 
-    if (!checkPassword) throw new AppError("Incorrect Password!", 403, "password");
+    if (!checkPassword) {
+        throw new AppError("Incorrect Password!", 403, "password");
+    }
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -48,6 +58,8 @@ exports.loginSeller = asyncHandler(async (req, res) => {
             email: seller.email,
             avatar: seller.avatar,
             role: "admin",
+            notificationSettings: seller.notificationSettings,
+            emailSettings: seller.emailSettings,
         },
         message: "Login Successful!",
     });
@@ -56,11 +68,15 @@ exports.loginSeller = asyncHandler(async (req, res) => {
 exports.getMe = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
-    const seller = await Seller.findById(_id);
+    const seller = await Seller.findById(_id, ["-_id", "-__v", "-salt", "-password", "-notifications"]);
 
-    if (!seller) new AppError("Account Doesn't exists!", 400);
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -69,10 +85,13 @@ exports.getMe = asyncHandler(async (req, res) => {
     return res.status(200).json({
         JWT_TOKEN,
         user: {
+            role: "admin",
             fullName: seller.fullName,
             email: seller.email,
             avatar: seller.avatar,
-            role: "admin",
+
+            notificationSettings: seller.notificationSettings,
+            emailSettings: seller.emailSettings,
         },
     });
 });
@@ -80,11 +99,14 @@ exports.getMe = asyncHandler(async (req, res) => {
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
-    if (!email || !validator.isEmail(email)) new AppError("Please provide valid email address!", 400);
-
+    if (!email || !validator.isEmail(email)) {
+        throw new AppError("Please provide valid email address!", 400, "email");
+    }
     const seller = await Seller.findOne({ email });
 
-    if (!seller) new AppError("No user found with this email address!", 404);
+    if (!seller) {
+        throw new AppError("No account found with this email address!", 404, "email");
+    }
 
     const passwordResetToken = jwt.sign(
         { role: "ADMIN", type: "RESET_PASSWORD", _id: seller._id },
@@ -104,21 +126,29 @@ exports.forgetSellerPassword = asyncHandler(async (req, res) => {
 exports.resetSellerPassword = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) new AppError("User not found!", 404);
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const { password, confirmPassword } = req.body;
 
-    if (password !== confirmPassword) return res.status(400).json({ message: "Passwords don't match!" });
+    if (password !== confirmPassword) {
+        throw new AppError("Passwords don't match!", 400, "confirmPassword");
+    }
 
     seller.password = password;
 
     const saveSeller = await newSeller.save();
 
-    if (!saveSeller) new AppError("Oops! Something went wrong", 500);
+    if (!saveSeller) {
+        throw new AppError("Something went wrong", 500, "serverError");
+    }
 
     return res.status(200).json({
         message: "Password changed successfully!",
@@ -129,29 +159,36 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN") new AppError("Access Denied!", 403);
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) new AppError("User not found!", 404);
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const checkPassword = await seller.verifyPassword(oldPassword);
 
-    if (!checkPassword) return res.status(403).json({ type: "OLD_PASSWORD", message: "Incorrect Password!" });
+    if (!checkPassword) {
+        throw new AppError("Incorrect Password!", 403, "oldPassword");
+    }
 
-    if (!newPassword || !confirmPassword)
-        return res.status(400).json({ type: "PASSWORD", message: "Passwords Can't be empty!" });
+    if (!newPassword || !confirmPassword) {
+        throw new AppError("Passwords Can't be empty!", 400, "passwords");
+    }
 
-    if (newPassword !== confirmPassword)
-        return res.status(400).json({ type: "PASSWORD", message: "Passwords don't match!" });
+    if (newPassword !== confirmPassword) {
+        throw new AppError("Passwords don't match!", 400, "confirmPassword");
+    }
 
     seller.password = password;
 
     const saveSeller = newSeller.save();
 
     if (!saveSeller) {
-        res.status(500);
-        throw new Error("Oops! Something went wrong");
+        throw new AppError("Something went wrong", 500, "serverError");
     }
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
@@ -167,22 +204,30 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
 exports.changeSellerEmail = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const { email } = req.body;
 
-    if (!email || !isEmail(email))
-        return res.status(400).json({ type: "EMAIL", message: "Please provide valid email address!" });
+    if (!email || !validator.isEmail(email)) {
+        throw new AppError("Please provide valid email address!", 400, "email");
+    }
 
-    if (seller.email === email)
-        return res.status(400).json({ type: "EMAIL", message: "This email address is already added to your account!" });
+    const findExist = await Seller.findOne({ email: email });
+
+    if (findExist) {
+        throw new AppError("This email address is already in use!", 400, "email");
+    }
 
     // Generate OTP
+    // Save OTP
     // Send email
 
     res.json({
@@ -193,12 +238,15 @@ exports.changeSellerEmail = asyncHandler(async (req, res) => {
 exports.updateSellerEmail = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const { code, email } = req.body;
     // Verify OTP
@@ -207,35 +255,51 @@ exports.updateSellerEmail = asyncHandler(async (req, res) => {
 
     const saveSeller = await seller.save();
 
+    if (!saveSeller) {
+        throw new AppError("Something went wrong", 500, "serverError");
+    }
+
     res.json({
-        Type: "UPDATE",
+        Type: "update",
         message: "Updated Successfully!",
 
         user: {
-            fullName: saveSeller.fullName,
-            email: saveSeller.email,
-            avatar: saveSeller.avatar,
+            fullName: seller.fullName,
+            email: seller.email,
+            avatar: seller.avatar,
+            role: "admin",
+            notificationSettings: seller.notificationSettings,
+            emailSettings: seller.emailSettings,
         },
     });
 });
 
 exports.updateSellerInfo = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) return res.status(404).json({ type: "ACCOUNT", message: "Account Not Found!" });
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
 
     const { fullName, avatar } = req.body;
 
-    console.log(fullName);
-
     seller.fullName = fullName;
-    if (avatar) seller.avatar = avatar;
+
+    if (avatar) {
+        seller.avatar = avatar;
+    }
 
     const saveSeller = await seller.save();
+
+    if (!saveSeller) {
+        throw new AppError("Something went wrong", 500, "serverError");
+    }
 
     res.json({
         message: "Updated Successfully!",
@@ -243,6 +307,50 @@ exports.updateSellerInfo = asyncHandler(async (req, res) => {
             fullName: saveSeller.fullName,
             email: saveSeller.email,
             avatar: saveSeller.avatar,
+            role: "admin",
+            notificationSettings: saveSeller.notificationSettings,
+            emailSettings: saveSeller.emailSettings,
+        },
+    });
+});
+
+exports.updateNotificationSettings = asyncHandler(async (req, res) => {
+    const { _id, role, type } = req?.user;
+
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
+
+    const seller = await Seller.findById(_id);
+
+    if (!seller) {
+        throw new AppError("Access Denied!", 403, "authorization");
+    }
+
+    const { appOrders, appReviews, appStock, emailOrders, emailReviews, emailStock } = req.body;
+
+    seller.notificationSettings.orders = appOrders;
+    seller.notificationSettings.review = appReviews;
+    seller.notificationSettings.lowStock = appStock;
+    seller.emailSettings.orders = emailOrders;
+    seller.emailSettings.review = emailReviews;
+    seller.emailSettings.lowStock = emailStock;
+
+    const saveSeller = await seller.save();
+
+    if (!saveSeller) {
+        throw new AppError("Something went wrong", 500, "serverError");
+    }
+
+    res.json({
+        message: "Updated Successfully!",
+        user: {
+            fullName: saveSeller.fullName,
+            email: saveSeller.email,
+            avatar: saveSeller.avatar,
+            role: "admin",
+            notificationSettings: saveSeller.notificationSettings,
+            emailSettings: saveSeller.emailSettings,
         },
     });
 });

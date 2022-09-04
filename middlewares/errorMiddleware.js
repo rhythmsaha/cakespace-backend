@@ -7,7 +7,7 @@ const notFound = (req, res, next) => {
 const handleValidationError = (err, res) => {
     const fields = Object.values(err.errors).map((el) => ({ field: el.path, message: el.message }));
     let code = 400;
-    res.status(code).send({ message: "validationError", fields });
+    res.status(code).send({ type: "validationError", fields });
 };
 
 const errorHandler = (err, req, res, next) => {

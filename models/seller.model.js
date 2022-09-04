@@ -47,12 +47,12 @@ const Seller = new mongoose.Schema({
     },
 
     emailSettings: {
-        orders: { type: Boolean, default: true },
-        review: { type: Boolean, default: true },
-        lowStock: { type: Boolean, default: true },
+        orders: { type: Boolean, default: false },
+        review: { type: Boolean, default: false },
+        lowStock: { type: Boolean, default: false },
     },
 
-    notification: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+    notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
 });
 
 Seller.pre("save", function (next) {
