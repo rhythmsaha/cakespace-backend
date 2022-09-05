@@ -1,13 +1,13 @@
 const asyncHandler = require("express-async-handler");
 const Flavour = require("../models/flavours.model");
+const AppError = require("../utils/AppError");
 
 exports.getFlavours = asyncHandler(async (req, res) => {
     const { enabled } = req.query;
     const flavours = await Flavour.find({ enabled });
 
-    if (!flavours) {
-        res.status(404);
-        throw new Error("No Flavours found!");
+    if (!flavours || flavours.length === 0) {
+        throw new AppError("No Flavours found!", 404);
     }
 
     return res.status(200).json(flavours);
