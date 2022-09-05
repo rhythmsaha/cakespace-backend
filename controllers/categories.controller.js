@@ -4,7 +4,10 @@ const AppError = require("../utils/AppError");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
     const { enabled } = req.query;
-    const categories = await Category.find({ enabled });
+    const queries = {};
+    if (enabled) queries.enabled = enabled;
+
+    const categories = await Category.find(queries);
 
     if (!categories || categories.length === 0) {
         throw new AppError("No categories found!", 404);
@@ -18,8 +21,7 @@ exports.getCategory = expressAsyncHandler(async (req, res) => {
     const category = await Category.findOne({ slug });
 
     if (!category) {
-        res.status(404);
-        throw new Error("No category found!");
+        throw new AppError("No category found!", 404);
     }
 
     return res.status(200).json(category);
@@ -30,15 +32,18 @@ exports.addCategory = expressAsyncHandler(async (req, res) => {
     if (type !== "AUTH_TOKEN" && role !== "ADMIN")
         return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
 
-    const { name } = req.body;
+    const { name, icon, enabled } = req.body;
 
-    if (!name) res.status(400).json({ type: "NAME", message: "Name is required!" });
+    if (!name) return res.status(400).json({ type: "NAME", message: "Name is required!" });
 
-    const category = Category.findOne({ name });
+    const category = await Category.findOne({ name });
 
     if (category) return res.status(400).json({ message: "Category already exist!" });
 
     const newCategory = new Category({ name });
+
+    if (icon) newCategory.icon = icon;
+    if (enabled) newCategory.enabled = enabled;
 
     const saveCategory = await newCategory.save();
 
@@ -55,7 +60,7 @@ exports.updateCategory = expressAsyncHandler(async (req, res) => {
     const { slug } = req.params;
     const { name } = req.body;
 
-    const category = Category.findOne({ slug });
+    const category = await Category.findOne({ slug });
 
     if (!category) return res.status(404).json({ message: "Category not found!" });
 
