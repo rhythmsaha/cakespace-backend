@@ -1,13 +1,13 @@
 const expressAsyncHandler = require("express-async-handler");
 const Category = require("../models/categories.model");
+const AppError = require("../utils/AppError");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
     const { enabled } = req.query;
     const categories = await Category.find({ enabled });
 
-    if (!categories) {
-        res.status(404);
-        throw new Error("No categories found!");
+    if (!categories || categories.length === 0) {
+        throw new AppError("No categories found!", 404);
     }
 
     return res.status(200).json(categories);

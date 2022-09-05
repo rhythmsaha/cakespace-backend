@@ -175,17 +175,17 @@ exports.changeSellerPassword = asyncHandler(async (req, res) => {
         throw new AppError("Incorrect Password!", 403, "oldPassword");
     }
 
-    if (!newPassword || !confirmPassword) {
-        throw new AppError("Passwords Can't be empty!", 400, "passwords");
+    if (!newPassword || newPassword.length < 6) {
+        throw new AppError("Password must be atleast 6 characters long!", 400, "passwords");
     }
 
     if (newPassword !== confirmPassword) {
         throw new AppError("Passwords don't match!", 400, "confirmPassword");
     }
 
-    seller.password = password;
+    seller.password = newPassword;
 
-    const saveSeller = newSeller.save();
+    const saveSeller = seller.save();
 
     if (!saveSeller) {
         throw new AppError("Something went wrong", 500, "serverError");

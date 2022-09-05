@@ -21,7 +21,7 @@ router.post("/seller/login", loginSeller);
 router.get("/seller/me", authorize, getMe);
 router.post("/seller/forgetpassword", forgetSellerPassword);
 router.post("/seller/resetpassword", authorize, resetSellerPassword);
-router.post("/seller/changepassword", changeSellerPassword);
+router.post("/seller/changepassword", authorize, changeSellerPassword);
 router.post("/seller/changeemail", authorize, changeSellerEmail);
 router.post("/seller/verifyemail", authorize, updateSellerEmail);
 router.post("/seller/updateinfo", authorize, updateSellerInfo);
