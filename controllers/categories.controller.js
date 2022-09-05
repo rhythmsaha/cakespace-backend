@@ -49,7 +49,7 @@ exports.addCategory = expressAsyncHandler(async (req, res) => {
 
     if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
 
-    res.json(saveCategory);
+    res.json({ message: "Category created!", category: saveCategory });
 });
 
 exports.updateCategory = expressAsyncHandler(async (req, res) => {
