@@ -6,7 +6,8 @@
     "author": "Rhythm Saha",
     "license": "MIT",
     "scripts": {
-        "dev": "nodemon server.js"
+        "dev": "nodemon server.js",
+        "start": "node server.js"
     },
     "devDependencies": {
         "nodemon": "^2.0.19"
