@@ -58,6 +58,7 @@ exports.updateCategory = expressAsyncHandler(async (req, res) => {
         return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
 
     const { slug } = req.params;
+    console.log(slug);
     const { name } = req.body;
 
     const category = await Category.findOne({ slug });
@@ -70,7 +71,7 @@ exports.updateCategory = expressAsyncHandler(async (req, res) => {
 
     if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
 
-    res.json(saveCategory);
+    res.json({ message: "Successfully Updated!", category: saveCategory });
 });
 
 exports.removeCategory = expressAsyncHandler(async (req, res) => {
