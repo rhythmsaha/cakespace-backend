@@ -32,7 +32,7 @@ exports.addCategory = expressAsyncHandler(async (req, res) => {
     const newCategory = new Category({ name });
 
     if (icon) newCategory.icon = icon;
-    if (enabled) newCategory.enabled = enabled;
+    newCategory.enabled = enabled;
 
     const saveCategory = await newCategory.save();
 
@@ -43,38 +43,37 @@ exports.addCategory = expressAsyncHandler(async (req, res) => {
 
 exports.updateCategory = expressAsyncHandler(async (req, res) => {
     const { role, type } = req?.user;
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
     const { slug } = req.params;
-    const { name } = req.body;
+    const { name, icon, enabled } = req.body;
 
     const category = await Category.findOne({ slug });
 
-    if (!category) return res.status(404).json({ message: "Category not found!" });
+    if (!category) throw new AppError("Category not found!", 404);
 
-    category.name = name;
+    if (name) category.name = name;
+    if (icon) category.icon = icon;
+    category.enabled = enabled || false;
 
     const saveCategory = await category.save();
 
-    if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
+    if (!saveCategory) throw new AppError("Couldn't save new category!", 500);
 
     res.json({ message: "Successfully Updated!", category: saveCategory });
 });
 
 exports.removeCategory = expressAsyncHandler(async (req, res) => {
-    const { _id, role, type } = req?.user;
-
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    const { role, type } = req?.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
     const { slug } = req.params;
 
-    if (!slug) return res.status(400).json({ message: "slug is required!" });
+    if (!slug) throw new AppError("slug is required!", 400);
 
     const deleteCategory = await Category.findOneAndDelete({ slug: slug });
 
-    if (!deleteCategory) return res.status(404).json({ message: "Failed to delete category!" });
+    if (!deleteCategory) throw new AppError("Failed to delete category!", 500);
 
-    res.json({ message: "Successfully deleted category!" });
+    res.json({ message: "Successfully deleted category!", category: deleteCategory });
 });
