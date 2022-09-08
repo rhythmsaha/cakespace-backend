@@ -19,9 +19,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
 
     const saveSeller = await newSeller.save();
 
-    if (!saveSeller) {
-        throw new AppError("Something went wrong", 500, "serverError");
-    }
+    if (!saveSeller) throw new AppError("Something went wrong", 500, "serverError");
 
     return res.status(201).json({
         message: "We've sent an OTP to your email address to verify your email address!",
@@ -37,15 +35,11 @@ exports.loginSeller = asyncHandler(async (req, res) => {
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) {
-        throw new AppError("Email doesn't exist!", 404, "email");
-    }
+    if (!seller) throw new AppError("Email doesn't exist!", 404, "email");
 
     const checkPassword = await seller.verifyPassword(password);
 
-    if (!checkPassword) {
-        throw new AppError("Incorrect Password!", 403, "password");
-    }
+    if (!checkPassword) throw new AppError("Incorrect Password!", 403, "password");
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -68,15 +62,11 @@ exports.loginSeller = asyncHandler(async (req, res) => {
 exports.getMe = asyncHandler(async (req, res) => {
     const { _id, role, type } = req?.user;
 
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
-        throw new AppError("Access Denied!", 403, "authorization");
-    }
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
     const seller = await Seller.findById(_id);
 
-    if (!seller) {
-        throw new AppError("Access Denied!", 403, "authorization");
-    }
+    if (!seller) throw new AppError("Access Denied!", 403, "authorization");
 
     const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
@@ -99,14 +89,11 @@ exports.getMe = asyncHandler(async (req, res) => {
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
-    if (!email || !validator.isEmail(email)) {
-        throw new AppError("Please provide valid email address!", 400, "email");
-    }
+    if (!email || !validator.isEmail(email)) throw new AppError("Please provide valid email address!", 400, "email");
+
     const seller = await Seller.findOne({ email });
 
-    if (!seller) {
-        throw new AppError("No account found with this email address!", 404, "email");
-    }
+    if (!seller) throw new AppError("No account found with this email address!", 404, "email");
 
     const passwordResetToken = jwt.sign(
         { role: "ADMIN", type: "RESET_PASSWORD", _id: seller._id },

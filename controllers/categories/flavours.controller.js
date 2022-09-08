@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
-const Flavour = require("../models/flavours.model");
-const AppError = require("../utils/AppError");
+const Flavour = require("../../models/flavours.model");
+const AppError = require("../../utils/AppError");
 
 exports.getFlavours = asyncHandler(async (req, res) => {
     const { enabled } = req.query;

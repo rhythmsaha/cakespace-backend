@@ -9,7 +9,7 @@ const {
     addFlavour,
     updateFlavour,
     deleteFlavour,
-} = require("../controllers/flavours.controller");
+} = require("../controllers/categories/flavours.controller");
 
 router.get("/", getFlavours);
 router.get("/:slug", getFlavour);

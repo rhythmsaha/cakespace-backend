@@ -1,6 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
-const Category = require("../models/categories.model");
-const AppError = require("../utils/AppError");
+const { Category } = require("../../models/categories.model");
+const AppError = require("../../utils/AppError");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
     const { enabled } = req.query;
@@ -9,9 +9,7 @@ exports.getCategories = expressAsyncHandler(async (req, res) => {
 
     const categories = await Category.find(queries);
 
-    if (!categories || categories.length === 0) {
-        throw new AppError("No categories found!", 404);
-    }
+    if (!categories || categories.length === 0) throw new AppError("No categories found!", 404);
 
     return res.status(200).json(categories);
 });
@@ -20,25 +18,16 @@ exports.getCategory = expressAsyncHandler(async (req, res) => {
     const { slug } = req.params;
     const category = await Category.findOne({ slug });
 
-    if (!category) {
-        throw new AppError("No category found!", 404);
-    }
+    if (!category) throw new AppError("No category found!", 404);
 
     return res.status(200).json(category);
 });
 
 exports.addCategory = expressAsyncHandler(async (req, res) => {
     const { role, type } = req?.user;
-    if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-        return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
     const { name, icon, enabled } = req.body;
-
-    if (!name) return res.status(400).json({ type: "NAME", message: "Name is required!" });
-
-    const category = await Category.findOne({ name });
-
-    if (category) return res.status(400).json({ message: "Category already exist!" });
 
     const newCategory = new Category({ name });
 
@@ -47,9 +36,9 @@ exports.addCategory = expressAsyncHandler(async (req, res) => {
 
     const saveCategory = await newCategory.save();
 
-    if (!saveCategory) return res.status(500).json({ message: "Couldn't save new category!" });
+    if (!saveCategory) throw new AppError("Couldn't save new category!", 500);
 
-    res.json({ message: "Category created!", category: saveCategory });
+    return res.status(200).json({ message: "Category created!", category: saveCategory });
 });
 
 exports.updateCategory = expressAsyncHandler(async (req, res) => {
@@ -58,7 +47,6 @@ exports.updateCategory = expressAsyncHandler(async (req, res) => {
         return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
 
     const { slug } = req.params;
-    console.log(slug);
     const { name } = req.body;
 
     const category = await Category.findOne({ slug });

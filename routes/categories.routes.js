@@ -9,7 +9,7 @@ const {
     updateCategory,
     addCategory,
     removeCategory,
-} = require("../controllers/categories.controller");
+} = require("../controllers/categories/categories.controller");
 
 router.get("/", getCategories);
 router.get("/:slug", getCategory);
