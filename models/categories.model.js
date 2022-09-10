@@ -8,7 +8,7 @@ const CategorySchema = new mongoose.Schema({
     slug: { type: String, slug: "name", index: true, unique: true },
     icon: { type: String },
     enabled: { type: Boolean, default: true },
-    subCategories: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategories" },
+    subCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" }],
 });
 
 const SubCategorySchema = new mongoose.Schema({

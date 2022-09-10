@@ -3,11 +3,15 @@ const { Category } = require("../../models/categories.model");
 const AppError = require("../../utils/AppError");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
-    const { enabled } = req.query;
+    const { enabled, getSubcategories } = req.query;
+
     const queries = {};
+
     if (enabled) queries.enabled = enabled;
 
-    const categories = await Category.find(queries);
+    const categories = await Category.find(queries)
+        .populate(getSubcategories && "subCategories")
+        .sort({ name: 1 });
 
     if (!categories || categories.length === 0) throw new AppError("No categories found!", 404);
 
@@ -58,7 +62,7 @@ exports.updateCategory = expressAsyncHandler(async (req, res) => {
 
     const saveCategory = await category.save();
 
-    if (!saveCategory) throw new AppError("Couldn't save new category!", 500);
+    if (!saveCategory) throw new AppError("Couldn't Update category!", 500);
 
     res.json({ message: "Successfully Updated!", category: saveCategory });
 });
