@@ -14,6 +14,7 @@ const Cake = new Schema(
         slug: { type: String, slug: "name", index: true, unique: true },
         description: { type: String, required: "{PATH} is required!", trim: true },
         category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+        subCategory: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" },
         flavours: [{ type: mongoose.Schema.Types.ObjectId, ref: "Flavour" }],
         weight: { type: String, required: "{PATH} is required!", trim: true },
         eggless: [{ type: Boolean, trim: true }],

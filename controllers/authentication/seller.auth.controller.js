@@ -22,7 +22,7 @@ exports.registerSeller = asyncHandler(async (req, res) => {
     if (!saveSeller) throw new AppError("Something went wrong", 500, "serverError");
 
     return res.status(201).json({
-        message: "We've sent an OTP to your email address to verify your email address!",
+        message: "Account created!",
     });
 });
 
