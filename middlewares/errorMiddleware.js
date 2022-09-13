@@ -11,26 +11,41 @@ const handleCastError = (error) => {
     return new AppError(message, 400);
 };
 
+/**
+ *
+ * @param {Error} error
+ * @param {import { Response } from "express";} res
+ * @returns
+ */
 const handleValidationError = (err, res) => {
     const fields = Object.values(err.errors).map((el) => ({ field: el.path, message: el.message }));
     let code = 400;
-    res.status(code).send({ type: "validationError", fields });
+    return res.status(code).send({ type: "validationError", fields });
 };
 
-const errorHandler = (err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const status = err.status || "error";
+/**
+ *
+ * @param {Error} error
+ * @param {import { Request } from "express";} req
+ * @param {import { Response } from "express";} res
+ * @param {import { NextFunction } from "express"} next
+ * @returns
+ */
+const errorHandler = (error, req, res, next) => {
+    const statusCode = error.statusCode || 500;
 
-    if (err.name === "CastError") error = handleCastError(error);
-    if (err.name === "ValidationError") return (err = handleValidationError(err, res));
+    if (error.name === "CastError") err = handleCastError(err);
+    if (error.name === "ValidationError") return (err = handleValidationError(err, res));
 
     res.status(statusCode);
     res.json({
-        type: err?.type,
-        status: status,
-        message: err.message,
-        stack: process.env.NODE_ENV === "production" ? null : err.stack,
+        ...error,
+        type: error.type,
+        message: error.message,
+        stack: process.env.NODE_ENV === "production" ? null : error.stack,
     });
+
+    next();
 };
 
 module.exports = { notFound, errorHandler };

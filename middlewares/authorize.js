@@ -1,7 +1,9 @@
 const jwt = require("jsonwebtoken");
+const AppError = require("../utils/AppError");
+const expressAsyncHandler = require("express-async-handler");
 
-exports.authorize = async (req, res, next) => {
-    if (!req.headers.authorization) return res.status(403).json({ type: "AUTHORIZATION", message: "Invald Token!" });
+exports.authorize = expressAsyncHandler(async (req, res, next) => {
+    if (!req.headers.authorization) throw new AppError("Acccess Denied!", 403, "authorization");
 
     try {
         const token = req.headers.authorization.split(" ")[1];
@@ -9,6 +11,6 @@ exports.authorize = async (req, res, next) => {
         req.user = JWT_DATA;
         next();
     } catch (error) {
-        return res.status(403).json({ type: "AUTHORIZATION", message: "Access Denied!" });
+        throw new AppError("Acccess Denied!", 403, "authorization");
     }
-};
+});
