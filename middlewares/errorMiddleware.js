@@ -18,7 +18,7 @@ const handleCastError = (error) => {
  * @returns
  */
 const handleValidationError = (err, res) => {
-    const fields = Object.values(err.errors).map((el) => ({ field: el.path, message: el.message }));
+    const fields = Object.values(err.errors).map((el) => el.properties);
     let code = 400;
     return res.status(code).send({ type: "validationError", fields });
 };
@@ -35,7 +35,7 @@ const errorHandler = (error, req, res, next) => {
     const statusCode = error.statusCode || 500;
 
     if (error.name === "CastError") err = handleCastError(err);
-    if (error.name === "ValidationError") return (err = handleValidationError(err, res));
+    if (error.name === "ValidationError") return handleValidationError(error, res);
 
     res.status(statusCode);
     res.json({

@@ -3,16 +3,21 @@ const Seller = require("../../models/seller.model");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../../utils/AppError");
 const { default: validator } = require("validator");
-const sendMail = require("../../utils/mailgun");
+const FormError = require("../../utils/formError");
+const { createJWT } = require("../../utils/jwt");
 
 exports.registerSeller = asyncHandler(async (req, res) => {
     const { fullName, email, password, confirmPassword, avatar } = req.body;
 
     if (password !== confirmPassword) {
-        return res.status(400).json({
-            type: "validationError",
-            fields: [{ field: "confirmPassword", message: "Passwords don't match!" }],
-        });
+        throw new FormError("Passwords don't match!", 400, "validationError", [
+            {
+                message: "Passwords don't match!",
+                type: "validationError",
+                path: "confirmPassword",
+                value: confirmPassword,
+            },
+        ]);
     }
 
     const newSeller = new Seller({ fullName, email, password, avatar });
@@ -30,22 +35,46 @@ exports.loginSeller = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !validator.isEmail(email)) {
-        throw new AppError("Please provide a valid email address!", 400, "email");
+        throw new FormError("Please provide a valid email address!", 400, "validationError", [
+            {
+                message: "Please provide a valid email address!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
     }
 
     const seller = await Seller.findOne({ email });
 
-    if (!seller) throw new AppError("Email doesn't exist!", 404, "email");
+    if (!seller) {
+        throw new FormError("Email doesn't exist!", 404, "validationError", [
+            {
+                message: "Email doesn't exist!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
+    }
 
     const checkPassword = await seller.verifyPassword(password);
 
-    if (!checkPassword) throw new AppError("Incorrect Password!", 403, "password");
+    if (!checkPassword) {
+        throw new FormError("Incorrect Password!", 403, "validationError", [
+            {
+                message: "Incorrect Password!",
+                type: "validationError",
+                path: "password",
+                value: password,
+            },
+        ]);
+    }
 
-    const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-    });
+    const JWT_TOKEN = createJWT({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, "1d");
 
     return res.status(200).json({
+        message: "Login Successful!",
         JWT_TOKEN,
         user: {
             fullName: seller.fullName,
@@ -55,7 +84,6 @@ exports.loginSeller = asyncHandler(async (req, res) => {
             notificationSettings: seller.notificationSettings,
             emailSettings: seller.emailSettings,
         },
-        message: "Login Successful!",
     });
 });
 
@@ -68,9 +96,7 @@ exports.getMe = asyncHandler(async (req, res) => {
 
     if (!seller) throw new AppError("Access Denied!", 403, "authorization");
 
-    const JWT_TOKEN = jwt.sign({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-    });
+    const JWT_TOKEN = createJWT({ role: "ADMIN", type: "AUTH_TOKEN", _id: seller._id }, "1d");
 
     return res.status(200).json({
         JWT_TOKEN,
