@@ -115,11 +115,28 @@ exports.getMe = asyncHandler(async (req, res) => {
 exports.forgetSellerPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
-    if (!email || !validator.isEmail(email)) throw new AppError("Please provide valid email address!", 400, "email");
-
+    if (!email || !validator.isEmail(email)) {
+        throw new FormError("Please provide a valid email address!", 400, "validationError", [
+            {
+                message: "Please provide a valid email address!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
+    }
     const seller = await Seller.findOne({ email });
 
-    if (!seller) throw new AppError("No account found with this email address!", 404, "email");
+    if (!seller) {
+        throw new FormError("Email doesn't exist!", 404, "validationError", [
+            {
+                message: "Email doesn't exist!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
+    }
 
     const passwordResetToken = jwt.sign(
         { role: "ADMIN", type: "RESET_PASSWORD", _id: seller._id },
@@ -152,12 +169,19 @@ exports.resetSellerPassword = asyncHandler(async (req, res) => {
     const { password, confirmPassword } = req.body;
 
     if (password !== confirmPassword) {
-        throw new AppError("Passwords don't match!", 400, "confirmPassword");
+        throw new FormError("Passwords don't match!", 400, "validationError", [
+            {
+                message: "Passwords don't match!",
+                type: "validationError",
+                path: "confirmPassword",
+                value: confirmPassword,
+            },
+        ]);
     }
 
     seller.password = password;
 
-    const saveSeller = await newSeller.save();
+    const saveSeller = await seller.save();
 
     if (!saveSeller) {
         throw new AppError("Something went wrong", 500, "serverError");
