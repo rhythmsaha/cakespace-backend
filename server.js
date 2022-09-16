@@ -10,18 +10,7 @@ const authenticationRoute = require("./routes/authentication.routes");
 const categoriesRoute = require("./routes/categories.routes");
 const subcategoriesRoute = require("./routes/subcategories.routes");
 const flavoursRoute = require("./routes/flavours.routes");
-
-// const Redis = require("redis");
-// const redisClient = Redis.createClient({
-//     url: "redis://redis-12781.c305.ap-south-1-1.ec2.cloud.redislabs.com:12781",
-//     password: "IZOZdKcFSXLwHMqRjSY0m4QSVJmmUXV6",
-// });
-
-// redisClient.connect();
-
-// redisClient.on("connect", function () {
-//     console.log("Connected!");
-// });
+const productsRoute = require("./routes/products.routes");
 
 dotenv.config();
 connectDB();
@@ -35,17 +24,8 @@ app.use("/auth", authenticationRoute);
 app.use("/categories", categoriesRoute);
 app.use("/subcategories", subcategoriesRoute);
 app.use("/flavours", flavoursRoute);
-
-app.get("/test", async (req, res) => {
-    const name = await redisClient.get("name");
-    res.send(name);
-});
-
-app.get("/test/:name", async (req, res) => {
-    const { name } = req.params;
-    redisClient.set("name", name);
-    res.send("done");
-});
+app.use("/flavours", flavoursRoute);
+app.use("/products", productsRoute);
 
 app.use(notFound);
 app.use(errorHandler);
