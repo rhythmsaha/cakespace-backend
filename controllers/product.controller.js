@@ -1,5 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 const Product = require("../models/product.model");
+const AppError = require("../utils/AppError");
 
 exports.addNewProduct = expressAsyncHandler(async (req, res) => {
     const { role, type } = req.user;
@@ -24,6 +25,14 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
 
     res.status(200).json({ message: "Added Successfully!", product: saveProduct });
 });
+
+exports.getAllProducts = expressAsyncHandler(async (req, res) => {
+    const products = await Product.find().select("-__v");
+    if (!products) new AppError("No products found!", 404, "products");
+    return res.json({ products: products });
+});
+
+// exports.getOneProduct;
 
 // exports.editCake = expressAsyncHandler(async (req, res) => {
 //     const { role, type } = req?.user;
