@@ -1,5 +1,5 @@
 const expressAsyncHandler = require("express-async-handler");
-const { Category } = require("../../models/categories.model");
+const { Category, SubCategory } = require("../../models/categories.model");
 const AppError = require("../../utils/AppError");
 
 exports.getCategories = expressAsyncHandler(async (req, res) => {
@@ -78,6 +78,8 @@ exports.removeCategory = expressAsyncHandler(async (req, res) => {
     const deleteCategory = await Category.findOneAndDelete({ slug: slug });
 
     if (!deleteCategory) throw new AppError("Failed to delete category!", 500);
+
+    await SubCategory.deleteMany({ categoryId: deleteCategory._id });
 
     res.json({ message: "Successfully deleted category!", category: deleteCategory });
 });
