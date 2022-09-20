@@ -42,7 +42,7 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
     let product;
 
     if (role === "ADMIN") {
-        product = await Product.findOne().select("-__v");
+        product = await Product.findOne({ slug }).populate("category subCategory flavour").select("-__v");
     } else {
         product = await Product.findOne().select("-__v -views -purchases");
         Product.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
@@ -50,7 +50,7 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
 
     if (!product) throw new AppError("Product not found!", 404, "product");
 
-    res.status(200).json(cake);
+    res.status(200).json(product);
 });
 
 // exports.deleteCake = expressAsyncHandler(async (req, res) => {
