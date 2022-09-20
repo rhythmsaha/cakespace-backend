@@ -77,11 +77,11 @@ exports.deleteProduct = expressAsyncHandler(async (req, res) => {
     const { role, type } = req.user;
     if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
-    const { _id } = req.params;
+    const { id } = req.params;
 
-    const deleteCake = await Cake.findByIdAndDelete(_id);
+    const deleteItem = await Cake.findByIdAndDelete(id);
 
-    if (!deleteCake) throw new AppError("Failed to delete product!", 500);
+    if (!deleteItem) throw new AppError("Failed to delete product!", 500);
 
-    res.status(200).json({ message: "Product Deleted!", data: deleteCake });
+    res.status(200).json({ message: "Product Deleted!", data: deleteItem });
 });
