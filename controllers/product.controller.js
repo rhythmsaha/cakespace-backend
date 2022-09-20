@@ -73,47 +73,15 @@ exports.updateProduct = expressAsyncHandler(async (req, res) => {
     res.status(200).json({ message: "Product Updated!", data: updateProduct });
 });
 
-// exports.deleteCake = expressAsyncHandler(async (req, res) => {
-//     const { role, type } = req?.user;
+exports.deleteProduct = expressAsyncHandler(async (req, res) => {
+    const { role, type } = req.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
-//     if (type !== "AUTH_TOKEN" && role !== "ADMIN")
-//         return res.status(403).josn({ type: "AUTHORZATON", message: "Access denied!" });
+    const { _id } = req.params;
 
-//     const { slug } = req.params;
+    const deleteCake = await Cake.findByIdAndDelete(_id);
 
-//     const cake = await Cake.findOne({ slug });
+    if (!deleteCake) throw new AppError("Failed to delete product!", 500);
 
-//     if (!cake) {
-//         return res.status(404).json({ type: "CAKE", message: "Cake not found!" });
-//     }
-
-//     const deleteCake = await Cake.findByIdAndDelete(cake._id);
-
-//     if (!deleteCake) {
-//         return res.status(500).json({ type: "DELETE", message: "Failed to delete cake!" });
-//     }
-// });
-
-// exports.getCakes = expressAsyncHandler(async (req, res) => {
-//     const { role, type } = req?.user;
-//     const { category, flavours, weight, eggless, price } = req.body;
-
-//     const queryOptions = {};
-
-//     if (category && category.length > 0) queryOptions.category = category;
-//     if (flavours && flavours.length > 0) queryOptions.flavours = { $in: flavours };
-//     if (weight && weight > 0) queryOptions.weight = weight;
-//     if (typeof eggless === Boolean) queryOptions.eggless = eggless;
-//     if (typeof price.low === Number && price >= 0 && typeof price.high === Number && price.high > price.low)
-//         queryOptions.price = { $gte: price.low, $lte: price.high };
-
-//     const cake = await Cake.find({ ...queryOptions });
-
-//     if (type !== "AUTH_TOKEN" && role !== "ADMIN") {
-//         delete cake["__v"];
-//         delete cake["views"];
-//         delete cake["purchases"];
-//     }
-
-//     res.status(200).json(cake);
-// });
+    res.status(200).json({ message: "Product Deleted!", data: deleteCake });
+});
