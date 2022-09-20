@@ -17,20 +17,18 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
 
     const product = new Product(options);
 
-    res.status(200).json(product);
+    const saveProduct = await product.save();
 
-    // const saveProduct = await product.save();
+    if (!saveProduct) throw new AppError("Failed to add new product!", 500, "product");
 
-    // if (!saveProduct) throw new AppError("Failed to add new product!", 500, "product");
-
-    // res.status(200).json({ message: "Added Successfully!", product: saveProduct });
+    res.status(200).json({ message: "Added Successfully!", product: saveProduct });
 });
 
 exports.getAllProducts = expressAsyncHandler(async (req, res) => {
     const { role } = req.user;
     let products = [];
 
-    if (role === "ADMIN") products = await Product.find().select("-__v");
+    if (role === "ADMIN") products = await Product.find().select("-__v").sort("-createdAt");
     else products = await Product.find().select("-__v -views -purchases");
 
     if (!products) new AppError("No products found!", 404, "products");
