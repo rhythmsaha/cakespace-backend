@@ -32,15 +32,19 @@ const Product = new Schema(
             ref: "Category",
         },
 
-        subCategory: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "SubCategory",
-        },
+        subCategories: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "SubCategory",
+            },
+        ],
 
-        flavour: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Flavour",
-        },
+        flavours: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Flavour",
+            },
+        ],
 
         weight: {
             type: String,

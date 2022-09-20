@@ -6,22 +6,24 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
     const { role, type } = req.user;
     if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
 
-    const { name, description, category, subCategory, weight, flavour, price, images, stocks } = req.body;
+    const { name, description, category, subCategories, weight, flavours, price, images, stocks } = req.body;
 
     const options = { name, description, price, images, stocks };
 
-    if (category) options.category = category;
-    if (subCategory) options.subCategory = subCategory;
-    if (flavour) options.flavour = flavour;
+    if (category) options.category = category?._id;
+    if (subCategories) options.subCategories = subCategories.map((cat) => cat.value);
+    if (flavours) options.flavours = flavours.map((flavour) => flavour.value);
     if (weight) options.weight = weight;
 
     const product = new Product(options);
 
-    const saveProduct = await product.save();
+    res.status(200).json(product);
 
-    if (!saveProduct) throw new AppError("Failed to add new product!", 500, "product");
+    // const saveProduct = await product.save();
 
-    res.status(200).json({ message: "Added Successfully!", product: saveProduct });
+    // if (!saveProduct) throw new AppError("Failed to add new product!", 500, "product");
+
+    // res.status(200).json({ message: "Added Successfully!", product: saveProduct });
 });
 
 exports.getAllProducts = expressAsyncHandler(async (req, res) => {
