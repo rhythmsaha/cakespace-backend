@@ -25,7 +25,7 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
 });
 
 exports.getAllProducts = expressAsyncHandler(async (req, res) => {
-    const { role } = req.user;
+    const { role } = req?.user;
     let products = [];
 
     if (role === "ADMIN") products = await Product.find().select("-__v").sort("-createdAt");
@@ -36,7 +36,7 @@ exports.getAllProducts = expressAsyncHandler(async (req, res) => {
 });
 
 exports.getOneProduct = expressAsyncHandler(async (req, res) => {
-    const { role } = req.user;
+    const { role } = req?.user;
     const { slug } = req.params;
 
     let product;
