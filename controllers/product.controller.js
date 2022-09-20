@@ -42,7 +42,7 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
     let product;
 
     if (role === "ADMIN") {
-        product = await Product.findOne({ slug }).populate("category subCategory flavour").select("-__v");
+        product = await Product.findOne({ slug }).populate("category subCategories flavours").select("-__v");
     } else {
         product = await Product.findOne().select("-__v -views -purchases");
         Product.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
@@ -51,6 +51,26 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
     if (!product) throw new AppError("Product not found!", 404, "product");
 
     res.status(200).json(product);
+});
+
+exports.updateProduct = expressAsyncHandler(async (req, res) => {
+    const { role, type } = req.user;
+    if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
+
+    const { id } = req.params;
+
+    const { name, description, category, subCategories, weight, flavours, price, images, stocks } = req.body;
+
+    const options = { name, description, price, images, stocks };
+
+    if (category) options.category = category?._id;
+    if (subCategories) options.subCategories = subCategories.map((cat) => cat.value);
+    if (flavours) options.flavours = flavours.map((flavour) => flavour.value);
+    if (weight) options.weight = weight;
+
+    const updateProduct = await Product.findByIdAndUpdate(id, options, { new: true });
+
+    res.status(200).json({ message: "Product Updated!", data: updateProduct });
 });
 
 // exports.deleteCake = expressAsyncHandler(async (req, res) => {
@@ -96,59 +116,4 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
 //     }
 
 //     res.status(200).json(cake);
-// });
-
-// exports.editCake = expressAsyncHandler(async (req, res) => {
-//     const { role, type } = req.user;
-//     if (type !== "AUTH_TOKEN" && role !== "ADMIN") throw new AppError("Access Denied!", 403, "authorization");
-
-//     const { slug } = req.params;
-
-//     const { name, description, category, weight, flavours, eggless, price, images, seller, stock } = req.body;
-
-//     if (!name || !description || !category || !weight || !flavours || !egg_type || !price || !images || !seller) {
-//         return res.status(400).json({ type: "ALL", message: "Please fill all the required fields!" });
-//     }
-
-//     if (!name || typeof name !== String) {
-//         return res.status(400).json({ type: "NAME", message: "Please provide a valid name!" });
-//     }
-
-//     if (!description || typeof name !== String || description.length < 50) {
-//         return res.status(400).json({ type: "DESCRIPTION", message: "Description must be 50 characters long!" });
-//     }
-
-//     if (!weight || (typeof weight !== Number && weight < 10)) {
-//         return res.status(400).json({ type: "WEIGHT", message: "Please provide a valid weight!" });
-//     }
-
-//     if (!eggless || typeof eggless !== Boolean) {
-//         return res.status(400).json({ type: "EGGLESS", message: "Eggless type must be True or False!" });
-//     }
-
-//     if (!price || typeof price !== Number) {
-//         return res.status(400).json({ type: "PRICE", message: "Please provide a valid price!" });
-//     }
-
-//     if (!images || (images.length === 0 && !isStringsArray(images))) {
-//         return res.status(400).json({ type: "IMAGES", message: "Please provide a valid image link!" });
-//     }
-
-//     if (!stock || typeof stock !== Number) {
-//         return res.status(400).json({ type: "STOCKS", message: "Stocks must be number!" });
-//     }
-
-//     const updateOptions = {
-//         name: name,
-//         description: description,
-//         weight: weight,
-//         eggless: eggless,
-//         price: price,
-//         images: images,
-//         stock: stock,
-//     };
-
-//     const updateCake = await Cake.findOneAndUpdate({ slug }, updateOptions, { new: true });
-
-//     res.status(200).json(updateCake);
 // });
