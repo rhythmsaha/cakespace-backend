@@ -26,8 +26,6 @@ exports.authorize = expressAsyncHandler(async (req, res, next) => {
  * @param {import("express").NextFunction} next
  */
 exports.publicAccess = (req, res, next) => {
-    if (!req.headers.authorization) return next();
-
     try {
         const token = req.headers.authorization.split(" ")[1];
         const JWT_DATA = jwt.verify(token, process.env.JWT_SECRET);
