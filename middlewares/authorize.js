@@ -34,6 +34,7 @@ exports.publicAccess = (req, res, next) => {
         req.user = JWT_DATA;
         next();
     } catch (error) {
+        req.user = { role: "GUEST", type: "ACCESS" };
         next();
     }
 };
