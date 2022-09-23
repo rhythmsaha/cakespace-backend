@@ -1,49 +1,30 @@
 const jwt = require("jsonwebtoken");
-const UserMoodel = require("../../models/user.model");
-const { isEmail } = require("validator");
+const { default: validator } = require("validator");
 const asyncHandler = require("express-async-handler");
+const FormError = require("../../utils/formError");
+const User = require("../../models/user.model");
+const AppError = require("../../utils/AppError");
 
 exports.registerUser = asyncHandler(async (req, res) => {
-    const { firstname, middlename, lastname, email, password } = req.body;
+    const { firstname, lastname, email, password, confirmPassword } = req.body;
 
-    if (!firstname || !lastname || !email || !password) {
-        res.status(400);
-        throw new Error("Please fill the required fields!");
+    if (password !== confirmPassword) {
+        throw new FormError("Passwords don't match!", 400, "validationError", [
+            {
+                message: "Passwords don't match!",
+                type: "validationError",
+                path: "confirmPassword",
+                value: confirmPassword,
+            },
+        ]);
     }
 
-    if (!isEmail(email)) {
-        res.status(400);
-        throw new Error("Please provide valid email address!");
-    }
+    const _user = new User({ firstname, lastname, email, password });
 
-    const _user = await UserMoodel.findOne({ email });
+    const user = _user.save();
 
-    if (_user && _user.verified) {
-        res.status(400);
-        throw new Error("This email address is registered with another account!");
-    }
-
-    if (_user && !_user.verified) {
-        res.status(400);
-        throw new Error("Please verify your account!");
-    }
-
-    const user = new UserModel({
-        firstname,
-        middlename,
-        lastname,
-        email,
-    });
-
-    user.hashPassword(password);
-
-    const verificationToken = user.generateVerificationToken();
-
-    const saveUser = user.save();
-
-    if (!saveUser) {
-        res.status(400);
-        throw new Error("Oops! Something went wrong");
+    if (!user) {
+        throw new AppError("Something went wrong", 500, "serverError");
     }
 
     return res.status(201).json({
@@ -54,48 +35,77 @@ exports.registerUser = asyncHandler(async (req, res) => {
 exports.loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !isEmail(email)) {
-        res.status(400);
-        throw new Error("Please provide valid email address!");
+    if (!email || !validator.isEmail(email)) {
+        throw new FormError("Please provide a valid email address!", 400, "validationError", [
+            {
+                message: "Please provide a valid email address!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
     }
 
-    const user = await UserMoodel.findOne({ email });
+    const user = await User.findOne({ email });
 
     if (!user) {
-        res.status(403);
-        throw new Error("Invalid email address!");
+        throw new FormError("Email doesn't exist!", 404, "validationError", [
+            {
+                message: "Email doesn't exist!",
+                type: "validationError",
+                path: "email",
+                value: email,
+            },
+        ]);
     }
 
     if (!user.verified) {
-        res.status(403);
-        throw new Error("Account isn't verified!");
+        throw new FormError("Email isn't verified!", 404, "verificationError", [
+            {
+                message: "Email isn't verified!",
+                type: "verificationError",
+                path: "email",
+                value: email,
+            },
+        ]);
     }
 
     const checkPassword = await user.verifyPassword(password);
 
     if (!checkPassword) {
-        res.status(403);
-        throw new Error("Incorrect Password!");
+        throw new FormError("Incorrect Password!", 403, "validationError", [
+            {
+                message: "Incorrect Password!",
+                type: "validationError",
+                path: "password",
+                value: password,
+            },
+        ]);
     }
 
-    const JWT_TOKEN = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-    });
+    const JWT_TOKEN = createJWT({ role: "USER", type: "AUTH_TOKEN", _id: user._id }, "1d");
 
-    return res.status(200).json({ JWT_TOKEN, message: "Login Successfull!" });
+    return res.status(200).json({
+        message: "Login Successfull!",
+        authToken: JWT_TOKEN,
+    });
 });
 
 exports.getUser = asyncHandler(async (req, res) => {
-    const { _id } = req.userData;
-    const user = await UserModel.findById(_id);
+    const { _id, role, type } = req?.user;
+    if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
 
-    if (!user) return res.status(404).json({ message: "Account Not Found!" });
+    const user = await User.findById(_id);
+
+    if (!user) throw new AppError("Access Denied!", 403, "authorization");
 
     return res.status(200).json({
-        firstname: user.firstname,
-        middlename: user.middlename,
-        lastname: user.lastname,
-        email: user.email,
+        authToken: JWT_TOKEN,
+        user: {
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+        },
     });
 });
 

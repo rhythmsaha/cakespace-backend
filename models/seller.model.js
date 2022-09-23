@@ -52,7 +52,7 @@ const Seller = new mongoose.Schema({
         lowStock: { type: Boolean, default: false },
     },
 
-    notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+    notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
 });
 
 Seller.pre("save", function (next) {

@@ -1,46 +1,43 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
-const { isLength, isAlpha, isEmail } = require("validator");
-const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { default: validator } = require("validator");
+const AppError = require("../utils/AppError");
 
-const User = new Schema(
+const User = new mongoose.Schema(
     {
         firstname: {
             type: String,
             required: "{PATH} is required!",
             trim: true,
-            validate(value) {
-                if (!isLength(value, [{ min: 2, max: 30 }])) throw new Error("minimum 2 characters required");
-
-                if (!isAlpha(value)) throw new Error("only alphabets allowed");
-            },
+            minlength: [2, "Atleast 2 characters required!"],
+            valicate: [!validator.isNumeric, "only alphabets are allowed!"],
         },
-
-        middlename: { type: String, trim: true },
 
         lastname: {
             type: String,
             required: "{PATH} is required!",
             trim: true,
-            validate(value) {
-                if (!isLength(value, [{ min: 2, max: 30 }])) throw new Error("minimum 2 characters required");
-
-                if (!isAlpha(value)) throw new Error("only alphabets allowed");
-            },
+            minlength: [2, "Atleast 2 characters required!"],
+            valicate: [!validator.isNumeric, "only alphabets are allowed!"],
         },
 
         email: {
             type: String,
-            required: "{PATH} is required!",
+            required: "Email is required!",
+            unique: [true, "Email is already in use!"],
             index: true,
             trim: true,
-            validate(value) {
-                if (!isEmail(value)) throw new Error("Invalid email address");
-            },
+            validate: [validator.isEmail, "Please provide valid email address!"],
         },
 
-        salt: { type: String },
-        hashed_password: { type: String },
+        salt: {
+            type: String,
+        },
+
+        password: {
+            type: String,
+            minLength: [6, "Password should be at least 6 characters long!"],
+        },
 
         verified: {
             type: Boolean,
@@ -48,45 +45,35 @@ const User = new Schema(
         },
 
         addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
-        orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
         cart: { type: mongoose.Schema.Types.ObjectId, ref: "Cart" },
+        orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+        notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
     },
     { timestamps: true }
 );
 
 // Generate Password Hash
-User.methods.hashPassword = function (password) {
-    const salt = crypto.randomBytes(8).toString("hex");
-    this.salt = salt;
-    this.hashed_password = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString(`hex`);
-};
+Seller.pre("save", function (next) {
+    if (this.password && this.isModified("password")) {
+        this.salt = crypto.randomBytes(8).toString("hex");
+        this.password = crypto.pbkdf2Sync(this.password, this.salt, 1000, 64, `sha512`).toString(`hex`);
+    }
+
+    next();
+});
+
+Seller.post("save", function (error, doc, next) {
+    if (error.name === "MongoServerError" && error.code === 11000) {
+        next(new AppError("Account already exists!", 409));
+    } else {
+        next();
+    }
+});
 
 // Verify Password Hash
-User.methods.verifyPassword = function (password) {
-    let enteredPasswordHash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`);
-    return this.hashed_password === enteredPasswordHash;
-};
-
-// Generate Verification Token
-User.methods.generateVerificationToken = () => {
-    const token = jwt.sign({ email: this.email }, this.salt, {
-        expiresIn: "1h",
-    });
-
-    return token;
-};
-
-// Verify Account
-User.methods.verifyUser = (token) => {
-    try {
-        const data = jwt.verify(token, this.salt);
-        if (data.email === this.email && !this.verified) {
-            this.verified = true;
-        }
-        return true;
-    } catch (error) {
-        return false;
-    }
+Seller.methods.verifyPassword = function (password) {
+    let enteredPassword = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`);
+    return this.password === enteredPassword;
 };
 
 module.exports = mongoose.model("User", User);
