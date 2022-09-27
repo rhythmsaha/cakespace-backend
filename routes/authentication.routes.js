@@ -4,17 +4,18 @@ const router = express.Router();
 const { authorize } = require("../middlewares/authorize");
 
 const {
-    registerSeller,
-    loginSeller,
-    getMe,
-    forgetSellerPassword,
-    resetSellerPassword,
-    changeSellerPassword,
-    changeSellerEmail,
-    updateSellerEmail,
-    updateSellerInfo,
-    updateNotificationSettings,
+  registerSeller,
+  loginSeller,
+  getMe,
+  forgetSellerPassword,
+  resetSellerPassword,
+  changeSellerPassword,
+  changeSellerEmail,
+  updateSellerEmail,
+  updateSellerInfo,
+  updateNotificationSettings,
 } = require("../controllers/authentication/seller.auth.controller");
+const { registerUser, loginUser, getUser } = require("../controllers/authentication/user.auth.controller");
 
 router.post("/seller/signup", registerSeller);
 router.post("/seller/login", loginSeller);
@@ -26,5 +27,9 @@ router.post("/seller/changeemail", authorize, changeSellerEmail);
 router.post("/seller/verifyemail", authorize, updateSellerEmail);
 router.post("/seller/updateinfo", authorize, updateSellerInfo);
 router.post("/seller/update_notification_settings", authorize, updateNotificationSettings);
+
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.get("/me", authorize, getUser);
 
 module.exports = router;
