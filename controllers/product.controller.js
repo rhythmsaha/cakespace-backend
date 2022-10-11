@@ -26,12 +26,28 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
 
 exports.getAllProducts = expressAsyncHandler(async (req, res) => {
   const { role } = req.user;
-  const queries = req.query;
+
+  const { category, subCategories, flavours = [], price, sortby } = req.query;
+
+  console.log(flavours);
+
+  const query = {};
+
+  if (category) query.category = category;
+  if (subCategories) query.subCategories = [subCategories];
+  if (flavours.length > 0) query.flavours = { $in: flavours };
+  if (price > 0) {
+    if (price < 700) {
+      query.price = { $lte: price };
+    } else {
+      query.price = { $gte: price };
+    }
+  }
 
   let products = [];
 
   if (role === "ADMIN") products = await Product.find().select("-__v").sort("-createdAt");
-  else products = await Product.find(queries).select("-__v -views -purchases");
+  else products = await Product.find({ ...query }).select("-__v -views -purchases");
 
   if (!products) new AppError("No products found!", 404, "products");
   return res.json({ products: products });
