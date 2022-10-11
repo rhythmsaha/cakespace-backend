@@ -32,6 +32,7 @@ exports.getAllProducts = expressAsyncHandler(async (req, res) => {
   console.log(flavours);
 
   const query = {};
+  let sort = {};
 
   if (category) query.category = category;
   if (subCategories) query.subCategories = [subCategories];
@@ -44,10 +45,21 @@ exports.getAllProducts = expressAsyncHandler(async (req, res) => {
     }
   }
 
+  if (sortby === "PRICE_HIGH_TO_LOW") {
+    sort.price = -1;
+  } else if (sortby === "PRICE_LOW_TO_HIGH") {
+    sort.price = 1;
+  } else if (sortby === "POPULARITY") {
+    sort.views = -1;
+  }
+
   let products = [];
 
   if (role === "ADMIN") products = await Product.find().select("-__v").sort("-createdAt");
-  else products = await Product.find({ ...query }).select("-__v -views -purchases");
+  else
+    products = await Product.find({ ...query })
+      .sort(sort)
+      .select("-__v -views -purchases");
 
   if (!products) new AppError("No products found!", 404, "products");
   return res.json({ products: products });
