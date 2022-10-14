@@ -27,13 +27,12 @@ exports.addNewProduct = expressAsyncHandler(async (req, res) => {
 exports.getAllProducts = expressAsyncHandler(async (req, res) => {
   const { role } = req.user;
 
-  const { category, subCategories, flavours = [], price, sortby } = req.query;
-
-  console.log(flavours);
+  const { category, subCategories, flavours = [], price, sortby, searchQuery } = req.query;
 
   const query = {};
   let sort = {};
 
+  if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
   if (category) query.category = category;
   if (subCategories) query.subCategories = [subCategories];
   if (flavours.length > 0) query.flavours = { $in: flavours };
@@ -74,7 +73,7 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
   if (role === "ADMIN") {
     product = await Product.findOne({ slug }).populate("category subCategories flavours").select("-__v");
   } else {
-    product = await Product.findOne().select("-__v -views -purchases");
+    product = await Product.findOne({ slug }).select("-__v -views -purchases");
     Product.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
   }
 

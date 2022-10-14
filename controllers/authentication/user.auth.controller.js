@@ -105,8 +105,8 @@ exports.getUser = asyncHandler(async (req, res) => {
   return res.status(200).json({
     authToken: JWT_TOKEN,
     user: {
-      firstname: user.firstName,
-      lastname: user.lastName,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
     },
   });
