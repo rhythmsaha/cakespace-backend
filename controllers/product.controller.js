@@ -64,6 +64,45 @@ exports.getAllProducts = expressAsyncHandler(async (req, res) => {
   return res.json({ products: products });
 });
 
+exports.getFeaturedProducts = expressAsyncHandler(async (req, res) => {
+  const [latestProducts, mostViewdProducts, mostPurchasedProducts] = await Promise.all([
+    Product.find().sort({ createdAt: -1 }).limit(10).select("-__v -views -purchases"),
+    Product.find({ views: { $gte: 1 } })
+      .sort({ views: -1 })
+      .limit(10)
+      .select("-__v -purchases"),
+    Product.find({ purchases: { $gte: 1 } })
+      .sort({ purchases: -1 })
+      .limit(10)
+      .select("-__v -views"),
+  ]);
+
+  const featuredProducts = [];
+
+  if (latestProducts.length > 0) {
+    featuredProducts.push({
+      title: "Recently Added",
+      products: latestProducts,
+    });
+  }
+
+  if (mostViewdProducts.length > 0) {
+    featuredProducts.push({
+      title: "Most Viewed Items",
+      products: mostViewdProducts,
+    });
+  }
+
+  if (mostPurchasedProducts.length > 0) {
+    featuredProducts.push({
+      title: "Most Purchased Items",
+      products: mostPurchasedProducts,
+    });
+  }
+
+  return res.json(featuredProducts);
+});
+
 exports.getOneProduct = expressAsyncHandler(async (req, res) => {
   const { role } = req?.user;
   const { slug } = req.params;
@@ -74,7 +113,6 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
     product = await Product.findOne({ slug }).populate("category subCategories flavours").select("-__v");
   } else {
     product = await Product.findOne({ slug }).select("-__v -views -purchases");
-    Product.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
   }
 
   if (!product) throw new AppError("Product not found!", 404, "product");
@@ -113,4 +151,14 @@ exports.deleteProduct = expressAsyncHandler(async (req, res) => {
   if (!deleteItem) throw new AppError("Failed to delete product!", 500);
 
   res.status(200).json({ message: "Product Deleted!", data: deleteItem });
+});
+
+exports.increaseProductViews = expressAsyncHandler(async (req, res) => {
+  const slug = req.params.slug;
+  const product = await Product.findOne({ slug });
+  product.views += 1;
+
+  const updateProduct = await product.save();
+  if (!updateProduct) throw new AppError("Something went wrong!", 500);
+  res.json({ product: updateProduct });
 });
