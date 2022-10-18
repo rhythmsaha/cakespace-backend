@@ -1,5 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 const Product = require("../models/product.model");
+const Review = require("../models/review.model");
 const AppError = require("../utils/AppError");
 
 exports.addNewProduct = expressAsyncHandler(async (req, res) => {
@@ -115,9 +116,14 @@ exports.getOneProduct = expressAsyncHandler(async (req, res) => {
     product = await Product.findOne({ slug }).select("-__v -views -purchases");
   }
 
+  const relatedProducts = await Product.find({ category: product.category })
+    .sort({ views: -1 })
+    .select("-__v -purchases")
+    .limit(6);
+
   if (!product) throw new AppError("Product not found!", 404, "product");
 
-  res.status(200).json(product);
+  res.status(200).json({ product: product, relatedProducts: relatedProducts });
 });
 
 exports.updateProduct = expressAsyncHandler(async (req, res) => {
@@ -161,4 +167,11 @@ exports.increaseProductViews = expressAsyncHandler(async (req, res) => {
   const updateProduct = await product.save();
   if (!updateProduct) throw new AppError("Something went wrong!", 500);
   res.json({ product: updateProduct });
+});
+
+exports.newReview = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+
+  if (!role) throw new AppError("Unauthorized", 403);
 });
