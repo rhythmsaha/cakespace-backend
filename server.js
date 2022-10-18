@@ -1,16 +1,15 @@
 const express = require("express");
-
 const dotenv = require("dotenv");
 const app = express();
 const connectDB = require("./config/db.config");
 const cors = require("cors");
-
 const { errorHandler, notFound } = require("./middlewares/errorMiddleware");
 const authenticationRoute = require("./routes/authentication.routes");
 const categoriesRoute = require("./routes/categories.routes");
 const subcategoriesRoute = require("./routes/subcategories.routes");
 const flavoursRoute = require("./routes/flavours.routes");
 const productsRoute = require("./routes/products.routes");
+const cartRoute = require("./routes/cart.routes");
 
 dotenv.config();
 connectDB();
@@ -26,6 +25,7 @@ app.use("/subcategories", subcategoriesRoute);
 app.use("/flavours", flavoursRoute);
 app.use("/flavours", flavoursRoute);
 app.use("/products", productsRoute);
+app.use("/cart", cartRoute);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -33,5 +33,5 @@ app.use(errorHandler);
 // Listening to port
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
-    console.log(`Server is listening on Port ${port}`);
+  console.log(`Server is listening on Port ${port}`);
 });

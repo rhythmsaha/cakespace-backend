@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 const Review = new Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   stars: { type: Number, enum: [1, 2, 3, 4, 5] },
-  content: { type: String },
+  headline: { type: String, requierd: true },
+  content: { type: String, required: true },
   cake: { type: mongoose.Schema.Types.ObjectId, ref: "Cake" },
 });
 
