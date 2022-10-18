@@ -13,7 +13,12 @@ exports.authorize = expressAsyncHandler(async (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const JWT_DATA = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = JWT_DATA;
+
+    if (JWT_DATA?.role === "USER" || JWT_DATA?.role === "GUEST" || JWT_DATA?.role === "ADMIN") {
+      req.user = JWT_DATA;
+    } else {
+      throw new AppError("Acccess Denied!", 403, "authorization");
+    }
     next();
   } catch (error) {
     throw new AppError("Acccess Denied!", 403, "authorization");
