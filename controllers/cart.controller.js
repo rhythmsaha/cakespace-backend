@@ -84,10 +84,10 @@ exports.removeItemFromCart = expressAsyncHandler(async (req, res) => {
 
   if (existingItem.quantity > 1) {
     const product = await Product.findById(productId);
-    const item = { ...existingItem };
+    const item = existingItem;
 
     item.quantity--;
-    item.price = item.quantity * product.price;
+    item.totalPrice = product.price * item.quantity;
 
     const cartItems = cart.items.map((_item) => {
       if (_item.product._id === productId) return item;
@@ -96,7 +96,8 @@ exports.removeItemFromCart = expressAsyncHandler(async (req, res) => {
 
     cart.items = cartItems;
   } else {
-    const cartItems = cart.items.filter((_item) => _item.product._id !== productId);
+    const cartItems = cart.items.filter((_item) => _item.product.toString() !== productId);
+    console.log(cartItems);
     cart.items = cartItems;
   }
 
