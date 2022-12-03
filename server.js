@@ -10,6 +10,7 @@ const subcategoriesRoute = require("./routes/subcategories.routes");
 const flavoursRoute = require("./routes/flavours.routes");
 const productsRoute = require("./routes/products.routes");
 const cartRoute = require("./routes/cart.routes");
+const checkoutRoute = require("./routes/checkout.routes");
 
 dotenv.config();
 connectDB();
@@ -26,6 +27,7 @@ app.use("/flavours", flavoursRoute);
 app.use("/flavours", flavoursRoute);
 app.use("/products", productsRoute);
 app.use("/cart", cartRoute);
+app.use("/checkout", checkoutRoute);
 
 app.use(notFound);
 app.use(errorHandler);
