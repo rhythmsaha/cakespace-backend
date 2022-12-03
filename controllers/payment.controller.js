@@ -26,7 +26,7 @@ exports.createPaymentIntent = expressAsyncHandler(async (req, res) => {
     },
   });
 
-  console.log(paymentIntent);
+  console.log("payment intent created");
 
   res.send({
     clientSecret: paymentIntent.client_secret,
