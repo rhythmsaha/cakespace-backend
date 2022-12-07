@@ -3,6 +3,7 @@ const Cart = require("../models/cart.model");
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
 const AppError = require("../utils/AppError");
+const { fetchCart } = require("../utils/cart");
 
 const createEmptyCart = async (userId) => {
   const cart = new Cart({ user: userId, items: [] });
@@ -20,7 +21,7 @@ const createEmptyCart = async (userId) => {
 exports.getCart = expressAsyncHandler(async (req, res) => {
   const { _id } = req.user;
 
-  let cart = await Cart.findOne({ user: _id }).populate("items.product");
+  let cart = await fetchCart(Cart, _id, true);
 
   if (cart) {
     cart.totalQuantity = cart.items.reduce((value, _item) => value + _item.quantity, 0);
@@ -38,12 +39,16 @@ exports.addItemToCart = expressAsyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { productId } = req.body;
 
-  let cart = await Cart.findOne({ user: _id });
+  let cart = await fetchCart(Cart, _id);
   if (!cart) cart = await createEmptyCart(_id);
 
   const product = await Product.findById(productId);
 
   if (!product) return res.status(400).json({ message: "Please select a Product!" });
+
+  if (product.stocks === 0) {
+    res.status(400).json({ message: "Out of stock!" });
+  }
 
   const existingItem = cart.items.find((item) => item.product.equals(productId));
 
@@ -77,7 +82,7 @@ exports.removeItemFromCart = expressAsyncHandler(async (req, res) => {
 
   if (!productId) throw new AppError("ProductId is required!", 400);
 
-  let cart = await Cart.findOne({ user: _id });
+  let cart = await fetchCart(Cart, _id);
   const existingItem = cart.items.find((item) => item.product.equals(productId));
 
   if (!existingItem) throw new AppError("Product doesn't exist in cart!", 400);

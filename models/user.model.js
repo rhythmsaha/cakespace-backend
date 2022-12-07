@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { default: validator } = require("validator");
 const AppError = require("../utils/AppError");
 
-const User = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
@@ -46,14 +46,13 @@ const User = new mongoose.Schema(
 
     addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
     cart: { type: mongoose.Schema.Types.ObjectId, ref: "Cart" },
-    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
   },
   { timestamps: true }
 );
 
 // Generate Password Hash
-User.pre("save", function (next) {
+UserSchema.pre("save", function (next) {
   if (this.password && this.isModified("password")) {
     this.salt = crypto.randomBytes(8).toString("hex");
     this.password = crypto.pbkdf2Sync(this.password, this.salt, 1000, 64, `sha512`).toString(`hex`);
@@ -62,7 +61,7 @@ User.pre("save", function (next) {
   next();
 });
 
-User.post("save", function (error, doc, next) {
+UserSchema.post("save", function (error, doc, next) {
   if (error.name === "MongoServerError" && error.code === 11000) {
     next(new AppError("Account already exists!", 409));
   } else {
@@ -71,9 +70,10 @@ User.post("save", function (error, doc, next) {
 });
 
 // Verify Password Hash
-User.methods.verifyPassword = function (password) {
+UserSchema.methods.verifyPassword = function (password) {
   let enteredPassword = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`);
   return this.password === enteredPassword;
 };
 
-module.exports = mongoose.model("User", User);
+const User = mongoose.model("User", UserSchema);
+module.exports = User;

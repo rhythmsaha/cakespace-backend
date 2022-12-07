@@ -2,8 +2,10 @@ require("dotenv/config");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const expressAsyncHandler = require("express-async-handler");
 const Cart = require("../models/cart.model");
+const Order = require("../models/order.model");
 const User = require("../models/user.model");
 const AppError = require("../utils/AppError");
+const { fetchCart } = require("../utils/cart");
 
 exports.createPaymentIntent = expressAsyncHandler(async (req, res) => {
   const { _id } = req.user;
@@ -21,16 +23,20 @@ exports.createPaymentIntent = expressAsyncHandler(async (req, res) => {
   const paymentIntent = await stripe.paymentIntents.create({
     amount: totalPrice,
     currency: "inr",
+
     automatic_payment_methods: {
       enabled: true,
     },
+
+    metadata: { userId: _id },
   });
 
   console.log("payment intent created");
 
   res.send({
-    clientSecret: paymentIntent.client_secret,
+    id: "pi_1Dsr4b2eZvKYlo2CxVdpVXXb",
     orderId: paymentIntent.created,
+    clientSecret: paymentIntent.client_secret,
     amount: paymentIntent.amount,
   });
 });
@@ -61,22 +67,29 @@ exports.webhook = expressAsyncHandler(async (request, response) => {
       const paymentIntent = event.data.object;
       console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
 
-      // Then define and call a method to handle the successful payment intent.
-      // handlePaymentIntentSucceeded(paymentIntent);
+      let cart = await fetchCart(Cart, paymentIntent.metadata.userId, true);
+      const newOrder = new Order({
+        orderId: paymentIntent.created,
+        transaction_id: paymentIntent.id,
+        user: paymentIntent.metadata.userId,
+        items: cart.items,
+        totalQuantity: cart.totalQuantity,
+        totalAmount: paymentIntent.amount,
+        orderStatus: "SUCCESS",
+        shhipping: paymentIntent.shipping,
+      });
 
-      const user = await User.findOne({ email: paymentIntent.receipt_email });
-      let cart = await Cart.findOne({ user: user._id });
+      await newOrder.save();
 
       cart.items = [];
       cart.totalQuantity = 0;
       cart.totalAmount = 0;
 
       await cart.save();
+
       break;
     case "payment_method.attached":
       const paymentMethod = event.data.object;
-      // Then define and call a method to handle the successful attachment of a PaymentMethod.
-      // handlePaymentMethodAttached(paymentMethod);
       break;
     default:
       // Unexpected event type
