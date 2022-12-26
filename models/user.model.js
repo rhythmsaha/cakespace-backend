@@ -45,7 +45,21 @@ const UserSchema = new mongoose.Schema(
     },
 
     addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
+
     cart: { type: mongoose.Schema.Types.ObjectId, ref: "Cart" },
+
+    notificationSettings: {
+      orders: { type: Boolean, default: true },
+      review: { type: Boolean, default: true },
+      lowStock: { type: Boolean, default: true },
+    },
+
+    emailSettings: {
+      orders: { type: Boolean, default: false },
+      review: { type: Boolean, default: false },
+      lowStock: { type: Boolean, default: false },
+    },
+
     notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
   },
   { timestamps: true }
