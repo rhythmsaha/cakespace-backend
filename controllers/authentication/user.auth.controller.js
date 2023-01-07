@@ -5,6 +5,8 @@ const FormError = require("../../utils/formError");
 const User = require("../../models/user.model");
 const AppError = require("../../utils/AppError");
 const { createJWT } = require("../../utils/jwt");
+const { generateOTP } = require("../../utils/generateOTP");
+const OTP = require("../../models/OtpModel");
 
 exports.registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password, confirmPassword } = req.body;
@@ -129,9 +131,86 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     message: "Updated Successfully!",
-    firstName: user.firstName,
-    lastName: user.lastName,
-    gender: user.gender,
+    firstName: saveUser.firstName,
+    lastName: saveUser.lastName,
+    gender: saveUser.gender,
+  });
+});
+
+exports.requestEmailChange = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
+
+  const { email } = req.body;
+
+  if (!email) {
+    throw new FormError("Please provide a valid email address!", 400, "validationError", [
+      {
+        message: "Please provide a valid email address!",
+        type: "validationError",
+        path: "email",
+        value: email,
+      },
+    ]);
+  }
+
+  const user = await User.findOne({ email });
+
+  if (user) {
+    throw new FormError("Email already exists!", 400, "validationError", [
+      {
+        message: "Email already exists!",
+        type: "validationError",
+        path: "email",
+        value: email,
+      },
+    ]);
+  }
+
+  const code = generateOTP(6);
+  const newOTP = new OTP({
+    code,
+    email,
+  });
+
+  const saveOTP = await newOTP.save();
+
+  return res.status(200).json({
+    message: "We have sent an one time passcode to verify your email address!",
+    verifyMode: true,
+    email: email,
+  });
+});
+
+exports.verifyAndUpdateEmail = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
+
+  const { email, code } = req.body;
+
+  if (!email) {
+    throw new FormError("Please provide a valid email address!", 400, "validationError", [
+      {
+        message: "Please provide a valid email address!",
+        type: "validationError",
+        path: "email",
+        value: email,
+      },
+    ]);
+  }
+
+  const user = await User.findById(_id);
+
+  user.email = email;
+
+  const saveUser = await user.save();
+
+  return res.status(200).json({
+    message: "We have sent an one time passcode to verify your email address!",
+    email: saveUser.email,
+    firstName: saveUser.firstName,
+    lastName: saveUser.lastName,
+    gender: saveUser.gender,
   });
 });
 

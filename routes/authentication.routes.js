@@ -21,6 +21,8 @@ const {
   loginUser,
   getUser,
   updateProfile,
+  requestEmailChange,
+  verifyAndUpdateEmail,
 } = require("../controllers/authentication/user.auth.controller");
 
 router.post("/seller/signup", registerSeller);
@@ -38,5 +40,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/me", authorize, getUser);
 router.put("/profile", authorize, updateProfile);
+router.put("/updateemail", authorize, requestEmailChange);
+router.put("/verifyemail", authorize, verifyAndUpdateEmail);
 
 module.exports = router;
