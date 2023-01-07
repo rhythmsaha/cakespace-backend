@@ -21,6 +21,11 @@ const UserSchema = new mongoose.Schema(
       valicate: [!validator.isNumeric, "only alphabets are allowed!"],
     },
 
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+    },
+
     email: {
       type: String,
       required: "Email is required!",

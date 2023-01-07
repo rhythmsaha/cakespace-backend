@@ -108,7 +108,30 @@ exports.getUser = asyncHandler(async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      gender: user.gender,
     },
+  });
+});
+
+exports.updateProfile = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
+
+  const { firstName, lastName, gender } = req.body;
+
+  const user = await User.findById(_id);
+
+  user.firstName = firstName;
+  user.lastName = lastName;
+  user.gender = gender;
+
+  const saveUser = await user.save();
+
+  return res.status(200).json({
+    message: "Updated Successfully!",
+    firstName: user.firstName,
+    lastName: user.lastName,
+    gender: user.gender,
   });
 });
 
