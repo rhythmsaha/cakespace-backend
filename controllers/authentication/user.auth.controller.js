@@ -290,7 +290,7 @@ exports.updatePassword = asyncHandler(async (req, res) => {
 
 exports.NotificationSettings = asyncHandler(async (req, res) => {
   const { _id, role, type } = req?.user;
-  console.log(role);
+
   if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
 
   const { email_account, email_orders, email_offers, push_orders, push_offers } = req.body;
