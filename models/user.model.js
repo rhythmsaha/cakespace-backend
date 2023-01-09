@@ -55,14 +55,13 @@ const UserSchema = new mongoose.Schema(
 
     notificationSettings: {
       orders: { type: Boolean, default: true },
-      review: { type: Boolean, default: true },
-      lowStock: { type: Boolean, default: true },
+      offers: { type: Boolean, default: true },
     },
 
     emailSettings: {
-      orders: { type: Boolean, default: false },
-      review: { type: Boolean, default: false },
-      lowStock: { type: Boolean, default: false },
+      orders: { type: Boolean, default: true },
+      offers: { type: Boolean, default: true },
+      account: { type: Boolean, default: true },
     },
 
     notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],

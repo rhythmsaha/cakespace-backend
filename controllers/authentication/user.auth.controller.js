@@ -143,7 +143,7 @@ exports.requestEmailChange = asyncHandler(async (req, res) => {
 
   const { email } = req.body;
 
-  if (!email) {
+  if (!email || !validator.isEmail(email)) {
     throw new FormError("Please provide a valid email address!", 400, "validationError", [
       {
         message: "Please provide a valid email address!",
@@ -167,9 +167,15 @@ exports.requestEmailChange = asyncHandler(async (req, res) => {
     ]);
   }
 
-  const code = generateOTP(6);
+  let code = await OTP.findOne({ email });
+
+  if (code) {
+    await code.delete();
+  }
+
+  const otp = generateOTP(6);
   const newOTP = new OTP({
-    code,
+    code: otp,
     email,
   });
 
@@ -199,6 +205,23 @@ exports.verifyAndUpdateEmail = asyncHandler(async (req, res) => {
     ]);
   }
 
+  const otp = await OTP.findOne({ email });
+
+  if (!code || !otp.verify(code)) {
+    throw new FormError("Invalid code!", 403, "unauthorized", [
+      {
+        message: "Invalid code!",
+        type: "unauthorized",
+        path: "code",
+        value: code,
+      },
+    ]);
+  }
+
+  if (otp.verify(code)) {
+    await otp.delete();
+  }
+
   const user = await User.findById(_id);
 
   user.email = email;
@@ -206,7 +229,7 @@ exports.verifyAndUpdateEmail = asyncHandler(async (req, res) => {
   const saveUser = await user.save();
 
   return res.status(200).json({
-    message: "We have sent an one time passcode to verify your email address!",
+    message: "Updated successfully!",
     email: saveUser.email,
     firstName: saveUser.firstName,
     lastName: saveUser.lastName,
@@ -214,8 +237,104 @@ exports.verifyAndUpdateEmail = asyncHandler(async (req, res) => {
   });
 });
 
-exports.verifyUser = asyncHandler(async (req, res) => {});
-exports.userVerificationLink = asyncHandler(async (req, res) => {});
+exports.updatePassword = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
 
-exports.forgetUserPassword = asyncHandler(async (req, res) => {});
-exports.resetUserPassword = asyncHandler(async (req, res) => {});
+  const { password, newPassword, confirmPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new FormError("Please enter a valid password!", 400, "validationError", [
+      {
+        message: "Please enter a valid password!",
+        type: "validationError",
+        path: "newPassword",
+        value: newPassword,
+      },
+    ]);
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new FormError("Passwords don't match!", 400, "validationError", [
+      {
+        message: "Passwords don't match!",
+        type: "validationError",
+        path: "confirmPassword",
+        value: confirmPassword,
+      },
+    ]);
+  }
+
+  const user = await User.findById(_id);
+
+  const checkPassword = await user.verifyPassword(password);
+
+  if (!checkPassword) {
+    throw new FormError("Incorrect Password!", 403, "validationError", [
+      {
+        message: "Incorrect Password!",
+        type: "validationError",
+        path: "password",
+        value: password,
+      },
+    ]);
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return res.status(200).json({
+    message: "Updated password successfully!",
+  });
+});
+
+exports.NotificationSettings = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  console.log(role);
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
+
+  const { email_account, email_orders, email_offers, push_orders, push_offers } = req.body;
+
+  const user = await User.findById(_id);
+
+  user.emailSettings = {
+    account: email_account,
+    offers: email_offers,
+    orders: email_orders,
+  };
+
+  user.notificationSettings = {
+    orders: push_orders,
+    offers: push_offers,
+  };
+
+  const saveSettings = await user.save();
+
+  res.json({
+    message: "Updated successfully!",
+    email_account: saveSettings.emailSettings.account,
+    email_offers: saveSettings.emailSettings.offers,
+    email_orders: saveSettings.emailSettings.orders,
+    push_orders: saveSettings.notificationSettings.orders,
+    push_offers: saveSettings.notificationSettings.offers,
+  });
+});
+
+exports.getNotificationsSettings = asyncHandler(async (req, res) => {
+  const { _id, role, type } = req?.user;
+  if (type !== "AUTH_TOKEN" && role !== "USER") throw new AppError("Access Denied!", 403, "authorization");
+
+  const user = await User.findById(_id);
+
+  if (!user) {
+    throw new AppError("Access Denied!", 403, "authorization");
+  }
+
+  res.json({
+    email_account: user.emailSettings.account,
+    email_offers: user.emailSettings.offers,
+    email_orders: user.emailSettings.orders,
+    push_orders: user.notificationSettings.orders,
+    push_offers: user.notificationSettings.offers,
+  });
+});

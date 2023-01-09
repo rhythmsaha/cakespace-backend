@@ -23,6 +23,9 @@ const {
   updateProfile,
   requestEmailChange,
   verifyAndUpdateEmail,
+  updatePassword,
+  getNotificationsSettings,
+  NotificationSettings,
 } = require("../controllers/authentication/user.auth.controller");
 
 router.post("/seller/signup", registerSeller);
@@ -41,6 +44,9 @@ router.post("/login", loginUser);
 router.get("/me", authorize, getUser);
 router.put("/profile", authorize, updateProfile);
 router.put("/updateemail", authorize, requestEmailChange);
-router.put("/verifyemail", authorize, verifyAndUpdateEmail);
+router.post("/verifyemail", authorize, verifyAndUpdateEmail);
+router.put("/password", authorize, updatePassword);
+router.get("/notificationsettings", authorize, getNotificationsSettings);
+router.put("/notificationsettings", authorize, NotificationSettings);
 
 module.exports = router;
